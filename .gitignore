@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+
+# Visual Studio cache
+*.cache
+*.db
+*.dbcache
+FileContentIndex/
+DesignTimeBuild/
+
+# Rider
+.idea/
+
+# Logs
+*.log

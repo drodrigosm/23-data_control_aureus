@@ -1,0 +1,121 @@
+<Window
+    x:Class="AureusControl.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="AureusControl">
+
+    <Grid>
+
+        <!-- ===== DEFINICIÓN DE FILAS ===== -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Menu -->
+            <RowDefinition Height="Auto"/>  <!-- Toolbar -->
+            <RowDefinition Height="*"/>     <!-- Contenido -->
+        </Grid.RowDefinitions>
+
+        <!-- ===== MENU BAR SUPERIOR ===== -->
+        <MenuBar Grid.Row="0">
+
+            <MenuBarItem Title="Archivo">
+                <MenuFlyoutItem Text="Salir"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Ver">
+                <MenuFlyoutItem Text="Actualizar"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Herramientas">
+                <MenuFlyoutItem Text="Opciones"/>
+            </MenuBarItem>
+
+            <MenuBarItem Title="Ayuda">
+                <MenuFlyoutItem Text="Acerca de"/>
+            </MenuBarItem>
+
+        </MenuBar>
+
+        <!-- ===== TOOLBAR SUPERIOR ===== -->
+        <Border Grid.Row="1"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Padding="10">
+
+            <StackPanel Orientation="Horizontal"
+                        Spacing="12"
+                        VerticalAlignment="Center">
+
+                <TextBlock Text="Bot ID:"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"/>
+
+                <TextBox x:Name="BotIdTextBox"
+                         Width="220"
+                         PlaceholderText="Introduce bot_id"/>
+
+                <Button Content="Cargar"
+                        Click="LoadBot_Click"/>
+
+            </StackPanel>
+        </Border>
+
+        <!-- ===== CONTENIDO PRINCIPAL ===== -->
+        <NavigationView Grid.Row="2"
+                        x:Name="NavView"
+                        PaneDisplayMode="Left"
+                        SelectionChanged="NavView_SelectionChanged"
+                        IsSettingsVisible="False">
+
+            <NavigationView.MenuItems>
+
+                <NavigationViewItem x:Name="DataTab" Content="Visualizar Data" Tag="csv">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Document"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="LogsTab" Content="Logs" Tag="log">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Library"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="EntriesTab" Content="Entries" Tag="entries">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="List"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem x:Name="ConfigTab" Content="Config" Tag="config">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Setting"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+                <NavigationViewItem Content="Stats">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="View"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
+            </NavigationView.MenuItems>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Padding="20" Spacing="8">
+                    <TextBlock x:Name="MachineText"
+                               FontSize="16"
+                               FontWeight="SemiBold"/>
+                    <TextBlock x:Name="ViewerStatusText" Opacity="0.8"/>
+                </StackPanel>
+
+                <Frame x:Name="ContentFrame" Grid.Row="1"/>
+            </Grid>
+
+        </NavigationView>
+
+    </Grid>
+
+</Window>

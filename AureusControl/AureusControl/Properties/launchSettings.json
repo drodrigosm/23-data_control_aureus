@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AureusControl (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "AureusControl (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
