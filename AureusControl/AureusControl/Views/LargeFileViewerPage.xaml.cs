@@ -15,9 +15,6 @@ namespace AureusControl.Views
     public sealed partial class LargeFileViewerPage : Page
     {
         private readonly LargeFileViewerViewModel _vm = new();
-        private List<Dictionary<string, string>> _pageRows = new();
-        private List<string> _visibleColumns = new();
-        private readonly Dictionary<string, HashSet<string>> _columnValueFilters = new();
 
         private List<Dictionary<string, string>> _loadedRows = new();
         private readonly List<Dictionary<string, string>> _filteredRows = new();
@@ -51,14 +48,7 @@ namespace AureusControl.Views
         {
             var type = FileTypeDetector.Detect(path);
             await _vm.OpenAsync(path, type);
-            SyncHeader();
 
-<<<<<<< HEAD
-            _pageRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
-            _visibleColumns = _vm.Columns.ToList();
-            _columnValueFilters.Clear();
-
-=======
             TitleText.Text = _vm.Title;
             StatusText.Text = _vm.Status;
             LoadingRing.IsActive = _vm.IsLoading;
@@ -70,7 +60,6 @@ namespace AureusControl.Views
             _filteredRows.Clear();
             _nextFilterScanPage = _vm.CurrentPage + 1;
 
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
             BuildColumnFilterControls();
             RefreshGrid();
         }
@@ -82,32 +71,6 @@ namespace AureusControl.Views
             FooterText.Text = "";
             CsvGrid.ItemsSource = null;
             ColumnTogglePanel.Children.Clear();
-<<<<<<< HEAD
-            _pageRows.Clear();
-            _visibleColumns.Clear();
-            _columnValueFilters.Clear();
-        }
-
-        private async System.Threading.Tasks.Task ChangePageAsync(int page)
-        {
-            if (page < 0 || page >= _vm.TotalPages)
-                return;
-
-            await _vm.LoadPageAsync(page, true);
-            SyncHeader();
-            _pageRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
-            RefreshGrid();
-        }
-
-        private void SyncHeader()
-        {
-            TitleText.Text = _vm.Title;
-            StatusText.Text = _vm.Status;
-            LoadingRing.IsActive = _vm.IsLoading;
-            PageNumberBox.Value = _vm.CurrentPage + 1;
-            PrevButton.IsEnabled = _vm.CurrentPage > 0;
-            NextButton.IsEnabled = _vm.CurrentPage + 1 < _vm.TotalPages;
-=======
 
             _loadedRows.Clear();
             _filteredRows.Clear();
@@ -222,7 +185,6 @@ namespace AureusControl.Views
             }
 
             return true;
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
         }
 
         private void BuildColumnFilterControls()
@@ -258,48 +220,6 @@ namespace AureusControl.Views
 
         private void RefreshGrid()
         {
-<<<<<<< HEAD
-            var rows = ApplyFilters(_pageRows);
-
-            if (_vm.FileType == LargeFileType.Csv)
-                CsvGrid.ItemsSource = BuildCsvTableRows(rows);
-            else
-                CsvGrid.ItemsSource = rows.Select(FormatRow).Cast<object>().ToList();
-
-            FooterText.Text = $"Página {_vm.CurrentPage + 1}/{_vm.TotalPages} · Mostrando {rows.Count} de {_pageRows.Count} filas";
-        }
-
-        private List<Dictionary<string, string>> ApplyFilters(List<Dictionary<string, string>> inputRows)
-        {
-            var search = SearchTextBox.Text?.Trim() ?? "";
-
-            return inputRows.Where(row =>
-            {
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    var globalMatch = row
-                        .Where(kv => _visibleColumns.Contains(kv.Key))
-                        .Any(kv => kv.Value?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
-
-                    if (!globalMatch)
-                        return false;
-                }
-
-                foreach (var filter in _columnValueFilters)
-                {
-                    if (filter.Value.Count == 0)
-                        continue;
-
-                    if (!row.TryGetValue(filter.Key, out var value))
-                        value = string.Empty;
-
-                    if (!filter.Value.Contains(value ?? string.Empty))
-                        return false;
-                }
-
-                return true;
-            }).ToList();
-=======
             var sourceRows = HasActiveFilters ? _filteredRows : _loadedRows;
 
             if (_vm.FileType == LargeFileType.Csv)
@@ -315,7 +235,6 @@ namespace AureusControl.Views
             {
                 FooterText.Text = $"Cargadas {_loadedRows.Count} filas · Página cargada {_vm.CurrentPage + 1}/{_vm.TotalPages}";
             }
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
         }
 
         private List<object> BuildCsvTableRows(List<Dictionary<string, string>> sourceRows)
@@ -374,11 +293,7 @@ namespace AureusControl.Views
                     HorizontalAlignment = HorizontalAlignment.Right
                 };
 
-<<<<<<< HEAD
-                filterButton.Click += (_, _) => ShowColumnFilterFlyout(filterButton, columnName);
-=======
                 filterButton.Click += async (_, _) => await ShowColumnFilterFlyoutAsync(filterButton, columnName);
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
 
                 Grid.SetColumn(title, 0);
                 Grid.SetColumn(filterButton, 1);
@@ -416,15 +331,6 @@ namespace AureusControl.Views
             return grid;
         }
 
-<<<<<<< HEAD
-        private void ShowColumnFilterFlyout(FrameworkElement target, string columnName)
-        {
-            var uniqueValues = _pageRows
-                .Select(r => r.TryGetValue(columnName, out var value) ? value ?? string.Empty : string.Empty)
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(v => v)
-                .ToList();
-=======
         private async System.Threading.Tasks.Task ShowColumnFilterFlyoutAsync(FrameworkElement target, string columnName)
         {
             if (!_columnDistinctCache.TryGetValue(columnName, out var uniqueValues))
@@ -444,7 +350,6 @@ namespace AureusControl.Views
 
                 _columnDistinctCache[columnName] = uniqueValues;
             }
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
 
             var selectedValues = _columnValueFilters.TryGetValue(columnName, out var existing)
                 ? new HashSet<string>(existing)
@@ -502,11 +407,7 @@ namespace AureusControl.Views
 
             var flyout = new Flyout { Content = flyoutContent };
 
-<<<<<<< HEAD
-            applyButton.Click += (_, _) =>
-=======
             applyButton.Click += async (_, _) =>
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
             {
                 var selected = valueChecks
                     .Where(v => v.IsChecked == true)
@@ -514,16 +415,6 @@ namespace AureusControl.Views
                     .ToHashSet(StringComparer.Ordinal);
 
                 _columnValueFilters[columnName] = selected;
-<<<<<<< HEAD
-                RefreshGrid();
-                flyout.Hide();
-            };
-
-            clearButton.Click += (_, _) =>
-            {
-                _columnValueFilters.Remove(columnName);
-                RefreshGrid();
-=======
                 await RestartFilteredScanAsync();
                 flyout.Hide();
             };
@@ -532,7 +423,6 @@ namespace AureusControl.Views
             {
                 _columnValueFilters.Remove(columnName);
                 await RestartFilteredScanAsync();
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
                 flyout.Hide();
             };
 
@@ -547,30 +437,6 @@ namespace AureusControl.Views
             return string.Join(" | ", row.Select(kv => $"{kv.Key}: {kv.Value}"));
         }
 
-<<<<<<< HEAD
-        private async void PrevButton_Click(object sender, RoutedEventArgs e)
-        {
-            await ChangePageAsync(_vm.CurrentPage - 1);
-        }
-
-        private async void NextButton_Click(object sender, RoutedEventArgs e)
-        {
-            await ChangePageAsync(_vm.CurrentPage + 1);
-        }
-
-        private async void GoPageButton_Click(object sender, RoutedEventArgs e)
-        {
-            var targetPage = (int)Math.Max(1, PageNumberBox.Value) - 1;
-            await ChangePageAsync(targetPage);
-        }
-
-        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            RefreshGrid();
-        }
-
-        private void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
-=======
         private async void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (HasActiveFilters)
@@ -580,7 +446,6 @@ namespace AureusControl.Views
         }
 
         private async void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
         {
             SearchTextBox.Text = "";
 
@@ -589,10 +454,6 @@ namespace AureusControl.Views
 
             _visibleColumns = _vm.Columns.ToList();
             _columnValueFilters.Clear();
-<<<<<<< HEAD
-            RefreshGrid();
-        }
-=======
             _filteredRows.Clear();
 
             await _vm.LoadPageAsync(0, true);
@@ -618,6 +479,5 @@ namespace AureusControl.Views
 
             return null;
         }
->>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
     }
 }

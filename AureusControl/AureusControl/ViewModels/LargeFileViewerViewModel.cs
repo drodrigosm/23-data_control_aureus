@@ -1,11 +1,12 @@
-﻿using System;
+﻿using AureusControl.Core.Services;
+using AureusControl.Core.Services.Parsers;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AureusControl.Core.Services;
-using AureusControl.Core.Services.Parsers;
 
 namespace AureusControl.ViewModels
 {
