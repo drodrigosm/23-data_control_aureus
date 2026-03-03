@@ -17,6 +17,10 @@ namespace AureusControl.Views
         private readonly LargeFileViewerViewModel _vm = new();
         private List<Dictionary<string, string>> _pageRows = new();
         private List<string> _visibleColumns = new();
+<<<<<<< HEAD
+=======
+        private readonly Dictionary<string, HashSet<string>> _columnValueFilters = new();
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
         public LargeFileViewerPage()
         {
@@ -31,6 +35,10 @@ namespace AureusControl.Views
 
             _pageRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
             _visibleColumns = _vm.Columns.ToList();
+<<<<<<< HEAD
+=======
+            _columnValueFilters.Clear();
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
             BuildColumnFilterControls();
             RefreshGrid();
@@ -42,10 +50,17 @@ namespace AureusControl.Views
             StatusText.Text = "";
             FooterText.Text = "";
             CsvGrid.ItemsSource = null;
+<<<<<<< HEAD
             ColumnFilterCombo.ItemsSource = null;
             ColumnTogglePanel.Children.Clear();
             _pageRows.Clear();
             _visibleColumns.Clear();
+=======
+            ColumnTogglePanel.Children.Clear();
+            _pageRows.Clear();
+            _visibleColumns.Clear();
+            _columnValueFilters.Clear();
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
         }
 
         private async System.Threading.Tasks.Task ChangePageAsync(int page)
@@ -71,8 +86,11 @@ namespace AureusControl.Views
 
         private void BuildColumnFilterControls()
         {
+<<<<<<< HEAD
             ColumnFilterCombo.ItemsSource = _vm.Columns;
             ColumnFilterCombo.SelectedIndex = -1;
+=======
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
             ColumnTogglePanel.Children.Clear();
 
             foreach (var column in _vm.Columns)
@@ -117,10 +135,15 @@ namespace AureusControl.Views
         private List<Dictionary<string, string>> ApplyFilters(List<Dictionary<string, string>> inputRows)
         {
             var search = SearchTextBox.Text?.Trim() ?? "";
+<<<<<<< HEAD
             var selectedColumn = ColumnFilterCombo.SelectedItem as string;
             var filterValue = ColumnFilterTextBox.Text?.Trim() ?? "";
 
             var output = inputRows.Where(row =>
+=======
+
+            return inputRows.Where(row =>
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
             {
                 if (!string.IsNullOrWhiteSpace(search))
                 {
@@ -132,17 +155,32 @@ namespace AureusControl.Views
                         return false;
                 }
 
+<<<<<<< HEAD
                 if (!string.IsNullOrWhiteSpace(selectedColumn) && !string.IsNullOrWhiteSpace(filterValue))
                 {
                     if (!row.TryGetValue(selectedColumn, out var value) ||
                         value?.Contains(filterValue, StringComparison.OrdinalIgnoreCase) != true)
+=======
+                foreach (var filter in _columnValueFilters)
+                {
+                    if (filter.Value.Count == 0)
+                        continue;
+
+                    if (!row.TryGetValue(filter.Key, out var value))
+                        value = string.Empty;
+
+                    if (!filter.Value.Contains(value ?? string.Empty))
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
                         return false;
                 }
 
                 return true;
             }).ToList();
+<<<<<<< HEAD
 
             return output;
+=======
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
         }
 
         private List<object> BuildCsvTableRows(List<Dictionary<string, string>> sourceRows)
@@ -151,7 +189,11 @@ namespace AureusControl.Views
             if (_visibleColumns.Count == 0)
                 return list;
 
+<<<<<<< HEAD
             list.Add(BuildCsvGridRow(_visibleColumns, true));
+=======
+            list.Add(BuildCsvHeaderRow());
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
             foreach (var row in sourceRows)
             {
@@ -159,21 +201,65 @@ namespace AureusControl.Views
                     .Select(c => row.TryGetValue(c, out var v) ? v : "")
                     .ToList();
 
-                list.Add(BuildCsvGridRow(values, false));
+                list.Add(BuildCsvDataRow(values));
             }
 
             return list;
         }
 
-        private static Grid BuildCsvGridRow(IReadOnlyList<string> values, bool isHeader)
+        private Grid BuildCsvHeaderRow()
         {
             var grid = new Grid
             {
                 Margin = new Thickness(0, 0, 0, 2),
-                Background = isHeader
-                    ? new SolidColorBrush(Color.FromArgb(255, 230, 230, 230))
-                    : null
+                Background = new SolidColorBrush(Color.FromArgb(255, 230, 230, 230))
             };
+
+            for (int i = 0; i < _visibleColumns.Count; i++)
+                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(220) });
+
+            for (int i = 0; i < _visibleColumns.Count; i++)
+            {
+                var columnName = _visibleColumns[i];
+
+                var cell = new Grid { Margin = new Thickness(4, 2, 4, 2) };
+                cell.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                cell.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                var title = new TextBlock
+                {
+                    Text = columnName,
+                    Margin = new Thickness(4, 2, 4, 2),
+                    FontWeight = FontWeights.SemiBold,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+
+                var filterButton = new Button
+                {
+                    Content = "▼",
+                    Padding = new Thickness(6, 0, 6, 0),
+                    MinWidth = 28,
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+
+                filterButton.Click += (_, _) => ShowColumnFilterFlyout(filterButton, columnName);
+
+                Grid.SetColumn(title, 0);
+                Grid.SetColumn(filterButton, 1);
+                cell.Children.Add(title);
+                cell.Children.Add(filterButton);
+
+                Grid.SetColumn(cell, i);
+                grid.Children.Add(cell);
+            }
+
+            return grid;
+        }
+
+        private Grid BuildCsvDataRow(IReadOnlyList<string> values)
+        {
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 2) };
 
             for (int i = 0; i < values.Count; i++)
                 grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(220) });
@@ -185,7 +271,7 @@ namespace AureusControl.Views
                     Text = values[i] ?? "",
                     Margin = new Thickness(8, 4, 12, 4),
                     TextTrimming = TextTrimming.CharacterEllipsis,
-                    FontWeight = isHeader ? FontWeights.SemiBold : FontWeights.Normal
+                    FontWeight = FontWeights.Normal
                 };
 
                 Grid.SetColumn(tb, i);
@@ -193,6 +279,92 @@ namespace AureusControl.Views
             }
 
             return grid;
+        }
+
+        private void ShowColumnFilterFlyout(FrameworkElement target, string columnName)
+        {
+            var uniqueValues = _pageRows
+                .Select(r => r.TryGetValue(columnName, out var value) ? value ?? string.Empty : string.Empty)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(v => v)
+                .ToList();
+
+            var selectedValues = _columnValueFilters.TryGetValue(columnName, out var existing)
+                ? new HashSet<string>(existing)
+                : new HashSet<string>(uniqueValues);
+
+            var valuesPanel = new StackPanel { Spacing = 4 };
+            var valueChecks = new List<CheckBox>();
+
+            foreach (var value in uniqueValues)
+            {
+                var checkbox = new CheckBox
+                {
+                    Content = string.IsNullOrEmpty(value) ? "(vacío)" : value,
+                    IsChecked = selectedValues.Contains(value),
+                    Tag = value
+                };
+
+                valueChecks.Add(checkbox);
+                valuesPanel.Children.Add(checkbox);
+            }
+
+            var selectAll = new CheckBox { Content = "Seleccionar todo", IsChecked = valueChecks.All(v => v.IsChecked == true) };
+            selectAll.Checked += (_, _) =>
+            {
+                foreach (var cb in valueChecks)
+                    cb.IsChecked = true;
+            };
+            selectAll.Unchecked += (_, _) =>
+            {
+                foreach (var cb in valueChecks)
+                    cb.IsChecked = false;
+            };
+
+            var applyButton = new Button { Content = "Aplicar", HorizontalAlignment = HorizontalAlignment.Stretch };
+            var clearButton = new Button { Content = "Quitar filtro", HorizontalAlignment = HorizontalAlignment.Stretch };
+
+            var footerButtons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+            footerButtons.Children.Add(applyButton);
+            footerButtons.Children.Add(clearButton);
+
+            var flyoutContent = new StackPanel { Spacing = 8, MinWidth = 280, MaxWidth = 360 };
+            flyoutContent.Children.Add(new TextBlock
+            {
+                Text = $"Filtro: {columnName}",
+                FontWeight = FontWeights.SemiBold
+            });
+            flyoutContent.Children.Add(selectAll);
+            flyoutContent.Children.Add(new ScrollViewer
+            {
+                MaxHeight = 300,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = valuesPanel
+            });
+            flyoutContent.Children.Add(footerButtons);
+
+            var flyout = new Flyout { Content = flyoutContent };
+
+            applyButton.Click += (_, _) =>
+            {
+                var selected = valueChecks
+                    .Where(v => v.IsChecked == true)
+                    .Select(v => v.Tag?.ToString() ?? string.Empty)
+                    .ToHashSet(StringComparer.Ordinal);
+
+                _columnValueFilters[columnName] = selected;
+                RefreshGrid();
+                flyout.Hide();
+            };
+
+            clearButton.Click += (_, _) =>
+            {
+                _columnValueFilters.Remove(columnName);
+                RefreshGrid();
+                flyout.Hide();
+            };
+
+            flyout.ShowAt(target);
         }
 
         private static string FormatRow(Dictionary<string, string> row)
@@ -224,6 +396,7 @@ namespace AureusControl.Views
             RefreshGrid();
         }
 
+<<<<<<< HEAD
         private void ColumnFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             RefreshGrid();
@@ -239,11 +412,20 @@ namespace AureusControl.Views
             SearchTextBox.Text = "";
             ColumnFilterTextBox.Text = "";
             ColumnFilterCombo.SelectedIndex = -1;
+=======
+        private void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
+        {
+            SearchTextBox.Text = "";
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
             foreach (var child in ColumnTogglePanel.Children.OfType<CheckBox>())
                 child.IsChecked = true;
 
             _visibleColumns = _vm.Columns.ToList();
+<<<<<<< HEAD
+=======
+            _columnValueFilters.Clear();
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
             RefreshGrid();
         }
     }

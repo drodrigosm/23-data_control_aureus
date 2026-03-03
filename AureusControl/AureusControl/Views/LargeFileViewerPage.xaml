@@ -36,21 +36,30 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
+<<<<<<< HEAD
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+=======
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
             </Grid.ColumnDefinitions>
 
             <TextBox x:Name="SearchTextBox"
                      Grid.Row="0"
                      Grid.Column="0"
+<<<<<<< HEAD
                      Grid.ColumnSpan="2"
+=======
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
                      MinWidth="280"
                      PlaceholderText="Buscar en la página actual..."
                      TextChanged="SearchTextBox_TextChanged"/>
 
+<<<<<<< HEAD
             <ComboBox x:Name="ColumnFilterCombo"
                       Grid.Row="0"
                       Grid.Column="2"
@@ -68,12 +77,21 @@
             <Button x:Name="ClearFiltersButton"
                     Grid.Row="0"
                     Grid.Column="4"
+=======
+            <Button x:Name="ClearFiltersButton"
+                    Grid.Row="0"
+                    Grid.Column="1"
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
                     Content="Limpiar filtros"
                     Click="ClearFiltersButton_Click"/>
 
             <Expander Grid.Row="1"
                       Grid.Column="0"
+<<<<<<< HEAD
                       Grid.ColumnSpan="5"
+=======
+                      Grid.ColumnSpan="2"
+>>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
                       Header="Mostrar/Ocultar columnas"
                       IsExpanded="False">
                 <ScrollViewer MaxHeight="130"
