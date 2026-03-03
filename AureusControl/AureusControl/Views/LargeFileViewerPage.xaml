@@ -6,6 +6,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -13,7 +14,8 @@
         <StackPanel Grid.Row="0"
                     Orientation="Horizontal"
                     Spacing="12"
-                    Padding="12">
+                    Padding="12"
+                    VerticalAlignment="Center">
 
             <TextBlock x:Name="TitleText"
                        FontSize="16"
@@ -26,18 +28,97 @@
 
             <TextBlock x:Name="StatusText"
                        Opacity="0.8"/>
-
-            <Button x:Name="PrevButton"
-                    Content="Anterior"/>                   
         </StackPanel>
 
-        <ListView x:Name="CsvGrid"
-                  Grid.Row="1"
-                  IsItemClickEnabled="False"/>
+        <Grid Grid.Row="1" Padding="12,0,12,8" ColumnSpacing="12" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="2"
-                   x:Name="FooterText"
-                   Padding="12"
-                   Opacity="0.8"/>
+            <TextBox x:Name="SearchTextBox"
+                     Grid.Row="0"
+                     Grid.Column="0"
+                     Grid.ColumnSpan="2"
+                     MinWidth="280"
+                     PlaceholderText="Buscar en la página actual..."
+                     TextChanged="SearchTextBox_TextChanged"/>
+
+            <ComboBox x:Name="ColumnFilterCombo"
+                      Grid.Row="0"
+                      Grid.Column="2"
+                      MinWidth="180"
+                      PlaceholderText="Filtrar columna"
+                      SelectionChanged="ColumnFilterCombo_SelectionChanged"/>
+
+            <TextBox x:Name="ColumnFilterTextBox"
+                     Grid.Row="0"
+                     Grid.Column="3"
+                     MinWidth="220"
+                     PlaceholderText="Valor filtro de columna"
+                     TextChanged="ColumnFilterTextBox_TextChanged"/>
+
+            <Button x:Name="ClearFiltersButton"
+                    Grid.Row="0"
+                    Grid.Column="4"
+                    Content="Limpiar filtros"
+                    Click="ClearFiltersButton_Click"/>
+
+            <Expander Grid.Row="1"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="5"
+                      Header="Mostrar/Ocultar columnas"
+                      IsExpanded="False">
+                <ScrollViewer MaxHeight="130"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="ColumnTogglePanel" Orientation="Horizontal" Spacing="8"/>
+                </ScrollViewer>
+            </Expander>
+        </Grid>
+
+        <ListView x:Name="CsvGrid"
+                  Grid.Row="2"
+                  Margin="12,0,12,0"
+                  IsItemClickEnabled="False"
+                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+
+        <Grid Grid.Row="3" Padding="12" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="PrevButton"
+                        Content="Anterior"
+                        Click="PrevButton_Click"/>
+                <Button x:Name="NextButton"
+                        Content="Siguiente"
+                        Click="NextButton_Click"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock Text="Página" VerticalAlignment="Center"/>
+                <NumberBox x:Name="PageNumberBox" MinWidth="110" Minimum="1" SpinButtonPlacementMode="Inline"/>
+                <Button Content="Ir" Click="GoPageButton_Click"/>
+            </StackPanel>
+
+            <TextBlock Grid.Column="3"
+                       x:Name="FooterText"
+                       Opacity="0.8"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"/>
+        </Grid>
     </Grid>
 </Page>
