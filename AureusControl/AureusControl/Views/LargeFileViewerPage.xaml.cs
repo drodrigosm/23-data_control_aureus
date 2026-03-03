@@ -15,26 +15,50 @@ namespace AureusControl.Views
     public sealed partial class LargeFileViewerPage : Page
     {
         private readonly LargeFileViewerViewModel _vm = new();
-        private List<Dictionary<string, string>> _pageRows = new();
+
+        private List<Dictionary<string, string>> _loadedRows = new();
+        private readonly List<Dictionary<string, string>> _filteredRows = new();
         private List<string> _visibleColumns = new();
         private readonly Dictionary<string, HashSet<string>> _columnValueFilters = new();
         private readonly Dictionary<string, List<string>> _columnDistinctCache = new();
 
+        private ScrollViewer? _listScrollViewer;
+        private bool _isLoadingMore;
+        private int _nextFilterScanPage;
+
+        private const int FilterMatchBatchSize = 300;
+
         public LargeFileViewerPage()
         {
             this.InitializeComponent();
+            Loaded += LargeFileViewerPage_Loaded;
+        }
+
+        private void LargeFileViewerPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_listScrollViewer != null)
+                return;
+
+            _listScrollViewer = FindDescendantScrollViewer(CsvGrid);
+            if (_listScrollViewer != null)
+                _listScrollViewer.ViewChanged += ListScrollViewer_ViewChanged;
         }
 
         public async System.Threading.Tasks.Task OpenAsync(string path)
         {
             var type = FileTypeDetector.Detect(path);
             await _vm.OpenAsync(path, type);
-            SyncHeader();
 
-            _pageRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
+            TitleText.Text = _vm.Title;
+            StatusText.Text = _vm.Status;
+            LoadingRing.IsActive = _vm.IsLoading;
+
+            _loadedRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
             _visibleColumns = _vm.Columns.ToList();
             _columnValueFilters.Clear();
             _columnDistinctCache.Clear();
+            _filteredRows.Clear();
+            _nextFilterScanPage = _vm.CurrentPage + 1;
 
             BuildColumnFilterControls();
             RefreshGrid();
@@ -47,31 +71,120 @@ namespace AureusControl.Views
             FooterText.Text = "";
             CsvGrid.ItemsSource = null;
             ColumnTogglePanel.Children.Clear();
-            _pageRows.Clear();
+
+            _loadedRows.Clear();
+            _filteredRows.Clear();
             _visibleColumns.Clear();
             _columnValueFilters.Clear();
             _columnDistinctCache.Clear();
+            _nextFilterScanPage = 0;
         }
 
-        private async System.Threading.Tasks.Task ChangePageAsync(int page)
+        private bool HasActiveFilters =>
+            !string.IsNullOrWhiteSpace(SearchTextBox.Text) ||
+            _columnValueFilters.Any(kv => kv.Value.Count > 0);
+
+        private async void ListScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
-            if (page < 0 || page >= _vm.TotalPages)
+            if (_listScrollViewer == null)
                 return;
 
-            await _vm.LoadPageAsync(page, true);
-            SyncHeader();
-            _pageRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
+            var nearBottom = _listScrollViewer.VerticalOffset >= (_listScrollViewer.ScrollableHeight - 120);
+            if (!nearBottom)
+                return;
+
+            await LoadMoreIfNeededAsync();
+        }
+
+        private async System.Threading.Tasks.Task LoadMoreIfNeededAsync()
+        {
+            if (_isLoadingMore || _vm.IsLoading)
+                return;
+
+            _isLoadingMore = true;
+            LoadingRing.IsActive = true;
+
+            try
+            {
+                if (HasActiveFilters)
+                    await LoadMoreFilteredMatchesAsync();
+                else
+                    await LoadMoreUnfilteredAsync();
+            }
+            finally
+            {
+                _isLoadingMore = false;
+                LoadingRing.IsActive = _vm.IsLoading;
+            }
+        }
+
+        private async System.Threading.Tasks.Task LoadMoreUnfilteredAsync()
+        {
+            await _vm.LoadNextPageIfNeededAsync();
+            _loadedRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
+            _nextFilterScanPage = Math.Max(_nextFilterScanPage, _vm.CurrentPage + 1);
             RefreshGrid();
         }
 
-        private void SyncHeader()
+        private async System.Threading.Tasks.Task RestartFilteredScanAsync()
         {
-            TitleText.Text = _vm.Title;
-            StatusText.Text = _vm.Status;
-            LoadingRing.IsActive = _vm.IsLoading;
-            PageNumberBox.Value = _vm.CurrentPage + 1;
-            PrevButton.IsEnabled = _vm.CurrentPage > 0;
-            NextButton.IsEnabled = _vm.CurrentPage + 1 < _vm.TotalPages;
+            _filteredRows.Clear();
+            _nextFilterScanPage = 0;
+            await LoadMoreFilteredMatchesAsync();
+        }
+
+        private async System.Threading.Tasks.Task LoadMoreFilteredMatchesAsync()
+        {
+            if (_vm.TotalPages <= 0)
+                return;
+
+            int added = 0;
+
+            while (_nextFilterScanPage < _vm.TotalPages && added < FilterMatchBatchSize)
+            {
+                await _vm.LoadPageAsync(_nextFilterScanPage, true);
+                _nextFilterScanPage++;
+
+                foreach (var row in _vm.Rows)
+                {
+                    if (!RowMatchesFilters(row))
+                        continue;
+
+                    _filteredRows.Add(new Dictionary<string, string>(row));
+                    added++;
+
+                    if (added >= FilterMatchBatchSize)
+                        break;
+                }
+            }
+
+            RefreshGrid();
+        }
+
+        private bool RowMatchesFilters(Dictionary<string, string> row)
+        {
+            var search = SearchTextBox.Text?.Trim() ?? "";
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var globalMatch = row.Any(kv => kv.Value?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
+                if (!globalMatch)
+                    return false;
+            }
+
+            foreach (var filter in _columnValueFilters)
+            {
+                if (filter.Value.Count == 0)
+                    continue;
+
+                if (!row.TryGetValue(filter.Key, out var value))
+                    value = string.Empty;
+
+                if (!filter.Value.Contains(value ?? string.Empty))
+                    return false;
+            }
+
+            return true;
         }
 
         private void BuildColumnFilterControls()
@@ -107,46 +220,21 @@ namespace AureusControl.Views
 
         private void RefreshGrid()
         {
-            var rows = ApplyFilters(_pageRows);
+            var sourceRows = HasActiveFilters ? _filteredRows : _loadedRows;
 
             if (_vm.FileType == LargeFileType.Csv)
-                CsvGrid.ItemsSource = BuildCsvTableRows(rows);
+                CsvGrid.ItemsSource = BuildCsvTableRows(sourceRows);
             else
-                CsvGrid.ItemsSource = rows.Select(FormatRow).Cast<object>().ToList();
+                CsvGrid.ItemsSource = sourceRows.Select(FormatRow).Cast<object>().ToList();
 
-            FooterText.Text = $"Página {_vm.CurrentPage + 1}/{_vm.TotalPages} · Mostrando {rows.Count} de {_pageRows.Count} filas";
-        }
-
-        private List<Dictionary<string, string>> ApplyFilters(List<Dictionary<string, string>> inputRows)
-        {
-            var search = SearchTextBox.Text?.Trim() ?? "";
-
-            return inputRows.Where(row =>
+            if (HasActiveFilters)
             {
-                if (!string.IsNullOrWhiteSpace(search))
-                {
-                    var globalMatch = row
-                        .Where(kv => _visibleColumns.Contains(kv.Key))
-                        .Any(kv => kv.Value?.Contains(search, StringComparison.OrdinalIgnoreCase) == true);
-
-                    if (!globalMatch)
-                        return false;
-                }
-
-                foreach (var filter in _columnValueFilters)
-                {
-                    if (filter.Value.Count == 0)
-                        continue;
-
-                    if (!row.TryGetValue(filter.Key, out var value))
-                        value = string.Empty;
-
-                    if (!filter.Value.Contains(value ?? string.Empty))
-                        return false;
-                }
-
-                return true;
-            }).ToList();
+                FooterText.Text = $"Filtradas {_filteredRows.Count} filas · Escaneadas páginas {_nextFilterScanPage}/{_vm.TotalPages}";
+            }
+            else
+            {
+                FooterText.Text = $"Cargadas {_loadedRows.Count} filas · Página cargada {_vm.CurrentPage + 1}/{_vm.TotalPages}";
+            }
         }
 
         private List<object> BuildCsvTableRows(List<Dictionary<string, string>> sourceRows)
@@ -253,7 +341,7 @@ namespace AureusControl.Views
                 }
                 else
                 {
-                    uniqueValues = _pageRows
+                    uniqueValues = _loadedRows
                         .Select(r => r.TryGetValue(columnName, out var value) ? value ?? string.Empty : string.Empty)
                         .Distinct(StringComparer.Ordinal)
                         .OrderBy(v => v, StringComparer.Ordinal)
@@ -319,7 +407,7 @@ namespace AureusControl.Views
 
             var flyout = new Flyout { Content = flyoutContent };
 
-            applyButton.Click += (_, _) =>
+            applyButton.Click += async (_, _) =>
             {
                 var selected = valueChecks
                     .Where(v => v.IsChecked == true)
@@ -327,14 +415,14 @@ namespace AureusControl.Views
                     .ToHashSet(StringComparer.Ordinal);
 
                 _columnValueFilters[columnName] = selected;
-                RefreshGrid();
+                await RestartFilteredScanAsync();
                 flyout.Hide();
             };
 
-            clearButton.Click += (_, _) =>
+            clearButton.Click += async (_, _) =>
             {
                 _columnValueFilters.Remove(columnName);
-                RefreshGrid();
+                await RestartFilteredScanAsync();
                 flyout.Hide();
             };
 
@@ -349,28 +437,15 @@ namespace AureusControl.Views
             return string.Join(" | ", row.Select(kv => $"{kv.Key}: {kv.Value}"));
         }
 
-        private async void PrevButton_Click(object sender, RoutedEventArgs e)
+        private async void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            await ChangePageAsync(_vm.CurrentPage - 1);
+            if (HasActiveFilters)
+                await RestartFilteredScanAsync();
+            else
+                RefreshGrid();
         }
 
-        private async void NextButton_Click(object sender, RoutedEventArgs e)
-        {
-            await ChangePageAsync(_vm.CurrentPage + 1);
-        }
-
-        private async void GoPageButton_Click(object sender, RoutedEventArgs e)
-        {
-            var targetPage = (int)Math.Max(1, PageNumberBox.Value) - 1;
-            await ChangePageAsync(targetPage);
-        }
-
-        private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            RefreshGrid();
-        }
-
-        private void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
+        private async void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
         {
             SearchTextBox.Text = "";
 
@@ -379,7 +454,30 @@ namespace AureusControl.Views
 
             _visibleColumns = _vm.Columns.ToList();
             _columnValueFilters.Clear();
+            _filteredRows.Clear();
+
+            await _vm.LoadPageAsync(0, true);
+            _loadedRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
+            _nextFilterScanPage = _vm.CurrentPage + 1;
+
             RefreshGrid();
+        }
+
+        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject parent)
+        {
+            if (parent is ScrollViewer sv)
+                return sv;
+
+            var childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                var result = FindDescendantScrollViewer(child);
+                if (result != null)
+                    return result;
+            }
+
+            return null;
         }
     }
 }

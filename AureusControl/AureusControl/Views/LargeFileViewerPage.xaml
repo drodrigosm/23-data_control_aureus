@@ -44,7 +44,7 @@
                      Grid.Row="0"
                      Grid.Column="0"
                      MinWidth="280"
-                     PlaceholderText="Buscar en la página actual..."
+                     PlaceholderText="Buscar en todo el fichero..."
                      TextChanged="SearchTextBox_TextChanged"/>
 
             <Button x:Name="ClearFiltersButton"
@@ -73,34 +73,10 @@
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
                   ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
-        <Grid Grid.Row="3" Padding="12" ColumnSpacing="10">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                <Button x:Name="PrevButton"
-                        Content="Anterior"
-                        Click="PrevButton_Click"/>
-                <Button x:Name="NextButton"
-                        Content="Siguiente"
-                        Click="NextButton_Click"/>
-            </StackPanel>
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <TextBlock Text="Página" VerticalAlignment="Center"/>
-                <NumberBox x:Name="PageNumberBox" MinWidth="110" Minimum="1" SpinButtonPlacementMode="Inline"/>
-                <Button Content="Ir" Click="GoPageButton_Click"/>
-            </StackPanel>
-
-            <TextBlock Grid.Column="3"
-                       x:Name="FooterText"
-                       Opacity="0.8"
-                       HorizontalAlignment="Right"
-                       VerticalAlignment="Center"/>
-        </Grid>
+        <TextBlock Grid.Row="3"
+                   x:Name="FooterText"
+                   Padding="12"
+                   Opacity="0.8"
+                   HorizontalAlignment="Right"/>
     </Grid>
 </Page>
