@@ -44,7 +44,11 @@
                      Grid.Row="0"
                      Grid.Column="0"
                      MinWidth="280"
+<<<<<<< HEAD
                      PlaceholderText="Buscar en la página actual..."
+=======
+                     PlaceholderText="Buscar en todo el fichero..."
+>>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
                      TextChanged="SearchTextBox_TextChanged"/>
 
             <Button x:Name="ClearFiltersButton"
@@ -73,6 +77,7 @@
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
                   ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
+<<<<<<< HEAD
         <Grid Grid.Row="3" Padding="12" ColumnSpacing="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -102,5 +107,12 @@
                        HorizontalAlignment="Right"
                        VerticalAlignment="Center"/>
         </Grid>
+=======
+        <TextBlock Grid.Row="3"
+                   x:Name="FooterText"
+                   Padding="12"
+                   Opacity="0.8"
+                   HorizontalAlignment="Right"/>
+>>>>>>> codex/implementar-paginacion-y-filtros-en-visualizar-datos-p1f1xc
     </Grid>
 </Page>
