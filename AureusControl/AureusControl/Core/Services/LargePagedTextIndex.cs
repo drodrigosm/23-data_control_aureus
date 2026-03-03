@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,46 +34,69 @@ namespace AureusControl.Core.Services
         private void Build(bool firstLineIsHeader, CancellationToken ct)
         {
             _pageOffsets.Clear();
+            HeaderLine = "";
 
             using var fs = new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var sr = new StreamReader(fs);
 
-            long currentOffset = 0;
-            int lineIndex = 0;
-            bool headerRead = false;
+            long firstPageOffset = 0;
 
-            // Offset de página 0 siempre al inicio (después de header si procede)
             if (firstLineIsHeader)
             {
-                var headerOffset = fs.Position;
-                HeaderLine = sr.ReadLine() ?? "";
-                headerRead = true;
-                currentOffset = fs.Position;
+                HeaderLine = ReadLineText(fs);
+                firstPageOffset = fs.Position;
             }
 
-            _pageOffsets.Add(currentOffset);
+            _pageOffsets.Add(firstPageOffset);
 
-            while (!sr.EndOfStream)
+            int dataLineCount = 0;
+
+            while (TryConsumeLine(fs, ct))
+            {
+                dataLineCount++;
+
+                if (dataLineCount % PageSize == 0 && fs.Position < fs.Length)
+                    _pageOffsets.Add(fs.Position);
+            }
+
+            if (_pageOffsets.Count == 0)
+                _pageOffsets.Add(firstPageOffset);
+        }
+
+        private static string ReadLineText(FileStream fs)
+        {
+            var bytes = new List<byte>();
+            int current;
+
+            while ((current = fs.ReadByte()) != -1)
+            {
+                if (current == '\n')
+                    break;
+
+                bytes.Add((byte)current);
+            }
+
+            if (bytes.Count > 0 && bytes[^1] == '\r')
+                bytes.RemoveAt(bytes.Count - 1);
+
+            var line = Encoding.UTF8.GetString(bytes.ToArray());
+            return line.TrimStart('\uFEFF');
+        }
+
+        private static bool TryConsumeLine(FileStream fs, CancellationToken ct)
+        {
+            bool consumed = false;
+            int current;
+
+            while ((current = fs.ReadByte()) != -1)
             {
                 ct.ThrowIfCancellationRequested();
+                consumed = true;
 
-                var before = fs.Position;
-                var line = sr.ReadLine();
-                if (line == null) break;
-
-                lineIndex++;
-
-                if (lineIndex % PageSize == 0)
-                {
-                    var nextPageOffset = fs.Position;
-                    _pageOffsets.Add(nextPageOffset);
-                }
-
-                // protección de progreso: si no avanza por alguna razón, corta
-                if (fs.Position <= before) break;
+                if (current == '\n')
+                    break;
             }
 
-            if (!headerRead && firstLineIsHeader) HeaderLine = "";
+            return consumed;
         }
     }
 }
