@@ -17,10 +17,7 @@ namespace AureusControl.Views
         private readonly LargeFileViewerViewModel _vm = new();
         private List<Dictionary<string, string>> _pageRows = new();
         private List<string> _visibleColumns = new();
-<<<<<<< HEAD
-=======
         private readonly Dictionary<string, HashSet<string>> _columnValueFilters = new();
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
         public LargeFileViewerPage()
         {
@@ -35,10 +32,7 @@ namespace AureusControl.Views
 
             _pageRows = _vm.Rows.Select(r => new Dictionary<string, string>(r)).ToList();
             _visibleColumns = _vm.Columns.ToList();
-<<<<<<< HEAD
-=======
             _columnValueFilters.Clear();
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
             BuildColumnFilterControls();
             RefreshGrid();
@@ -50,17 +44,10 @@ namespace AureusControl.Views
             StatusText.Text = "";
             FooterText.Text = "";
             CsvGrid.ItemsSource = null;
-<<<<<<< HEAD
-            ColumnFilterCombo.ItemsSource = null;
-            ColumnTogglePanel.Children.Clear();
-            _pageRows.Clear();
-            _visibleColumns.Clear();
-=======
             ColumnTogglePanel.Children.Clear();
             _pageRows.Clear();
             _visibleColumns.Clear();
             _columnValueFilters.Clear();
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
         }
 
         private async System.Threading.Tasks.Task ChangePageAsync(int page)
@@ -86,11 +73,6 @@ namespace AureusControl.Views
 
         private void BuildColumnFilterControls()
         {
-<<<<<<< HEAD
-            ColumnFilterCombo.ItemsSource = _vm.Columns;
-            ColumnFilterCombo.SelectedIndex = -1;
-=======
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
             ColumnTogglePanel.Children.Clear();
 
             foreach (var column in _vm.Columns)
@@ -135,15 +117,8 @@ namespace AureusControl.Views
         private List<Dictionary<string, string>> ApplyFilters(List<Dictionary<string, string>> inputRows)
         {
             var search = SearchTextBox.Text?.Trim() ?? "";
-<<<<<<< HEAD
-            var selectedColumn = ColumnFilterCombo.SelectedItem as string;
-            var filterValue = ColumnFilterTextBox.Text?.Trim() ?? "";
-
-            var output = inputRows.Where(row =>
-=======
 
             return inputRows.Where(row =>
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
             {
                 if (!string.IsNullOrWhiteSpace(search))
                 {
@@ -155,12 +130,6 @@ namespace AureusControl.Views
                         return false;
                 }
 
-<<<<<<< HEAD
-                if (!string.IsNullOrWhiteSpace(selectedColumn) && !string.IsNullOrWhiteSpace(filterValue))
-                {
-                    if (!row.TryGetValue(selectedColumn, out var value) ||
-                        value?.Contains(filterValue, StringComparison.OrdinalIgnoreCase) != true)
-=======
                 foreach (var filter in _columnValueFilters)
                 {
                     if (filter.Value.Count == 0)
@@ -170,17 +139,11 @@ namespace AureusControl.Views
                         value = string.Empty;
 
                     if (!filter.Value.Contains(value ?? string.Empty))
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
                         return false;
                 }
 
                 return true;
             }).ToList();
-<<<<<<< HEAD
-
-            return output;
-=======
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
         }
 
         private List<object> BuildCsvTableRows(List<Dictionary<string, string>> sourceRows)
@@ -189,11 +152,7 @@ namespace AureusControl.Views
             if (_visibleColumns.Count == 0)
                 return list;
 
-<<<<<<< HEAD
-            list.Add(BuildCsvGridRow(_visibleColumns, true));
-=======
             list.Add(BuildCsvHeaderRow());
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
             foreach (var row in sourceRows)
             {
@@ -396,36 +355,15 @@ namespace AureusControl.Views
             RefreshGrid();
         }
 
-<<<<<<< HEAD
-        private void ColumnFilterCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            RefreshGrid();
-        }
-
-        private void ColumnFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            RefreshGrid();
-        }
-
         private void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
         {
             SearchTextBox.Text = "";
-            ColumnFilterTextBox.Text = "";
-            ColumnFilterCombo.SelectedIndex = -1;
-=======
-        private void ClearFiltersButton_Click(object sender, RoutedEventArgs e)
-        {
-            SearchTextBox.Text = "";
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
 
             foreach (var child in ColumnTogglePanel.Children.OfType<CheckBox>())
                 child.IsChecked = true;
 
             _visibleColumns = _vm.Columns.ToList();
-<<<<<<< HEAD
-=======
             _columnValueFilters.Clear();
->>>>>>> origin/codex/implementar-paginacion-y-filtros-en-visualizar-datos-1od611
             RefreshGrid();
         }
     }
