@@ -213,6 +213,41 @@ namespace AureusControl.ViewModels
             return uniqueValues.OrderBy(v => v, StringComparer.Ordinal).ToList();
         }
 
+
+
+        // Compatibilidad con typo histórico en llamadas durante merges manuales.
+        public Task<List<Dictionary<string, string>>> LoadAllRowsAync(CancellationToken cancellationToken)
+        {
+            return LoadAllRowsAsync(cancellationToken);
+        }
+
+        public async Task<List<Dictionary<string, string>>> LoadAllRowsAsync(CancellationToken cancellationToken)
+        {
+            var allRows = new List<Dictionary<string, string>>();
+
+            if (_index == null || _reader == null)
+                return allRows;
+
+            for (int pageIndex = 0; pageIndex < TotalPages; pageIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                List<Dictionary<string, string>> parsedRows;
+
+                if (!_cache.TryGet(pageIndex, out parsedRows))
+                {
+                    var offset = _index.PageOffsets[pageIndex];
+                    var lines = await _reader.ReadPageLinesAsync(offset, PageSize, cancellationToken);
+                    parsedRows = ParseLines(lines, pageIndex);
+                    _cache.Set(pageIndex, parsedRows);
+                }
+
+                allRows.AddRange(parsedRows);
+            }
+
+            return allRows;
+        }
+
         public void Cancel()
         {
             try { _cts?.Cancel(); } catch { }
