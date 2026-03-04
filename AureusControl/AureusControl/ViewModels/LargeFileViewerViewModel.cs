@@ -178,6 +178,68 @@ namespace AureusControl.ViewModels
             return result;
         }
 
+
+        public async Task<List<string>> GetDistinctValuesForColumnAsync(string columnName, CancellationToken cancellationToken)
+        {
+            if (FileType != LargeFileType.Csv)
+                return new List<string>();
+
+            var columnIndex = Columns.FindIndex(c => string.Equals(c, columnName, StringComparison.Ordinal));
+            if (columnIndex < 0)
+                return new List<string>();
+
+            var uniqueValues = new HashSet<string>(StringComparer.Ordinal);
+
+            using var stream = new System.IO.FileStream(Path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite);
+            using var reader = new System.IO.StreamReader(stream);
+
+            // Skip CSV header.
+            await reader.ReadLineAsync();
+
+            while (!reader.EndOfStream)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var line = await reader.ReadLineAsync();
+                if (line is null)
+                    continue;
+
+                var fields = CsvLineParser.Parse(line, _csvDelimiter);
+                var value = columnIndex < fields.Length ? fields[columnIndex] : string.Empty;
+                uniqueValues.Add(value ?? string.Empty);
+            }
+
+            return uniqueValues.OrderBy(v => v, StringComparer.Ordinal).ToList();
+        }
+
+
+        public async Task<List<Dictionary<string, string>>> LoadAllRowsAsync(CancellationToken cancellationToken)
+        {
+            var allRows = new List<Dictionary<string, string>>();
+
+            if (_index == null || _reader == null)
+                return allRows;
+
+            for (int pageIndex = 0; pageIndex < TotalPages; pageIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                List<Dictionary<string, string>> parsedRows;
+
+                if (!_cache.TryGet(pageIndex, out parsedRows))
+                {
+                    var offset = _index.PageOffsets[pageIndex];
+                    var lines = await _reader.ReadPageLinesAsync(offset, PageSize, cancellationToken);
+                    parsedRows = ParseLines(lines, pageIndex);
+                    _cache.Set(pageIndex, parsedRows);
+                }
+
+                allRows.AddRange(parsedRows);
+            }
+
+            return allRows;
+        }
+
         public void Cancel()
         {
             try { _cts?.Cancel(); } catch { }

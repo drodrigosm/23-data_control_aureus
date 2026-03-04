@@ -54,6 +54,23 @@
                 <Button Content="Cargar"
                         Click="LoadBot_Click"/>
 
+                <TextBlock Text="Modo"
+                           VerticalAlignment="Center"
+                           FontWeight="SemiBold"/>
+
+                <ComboBox x:Name="LoadModeComboBox"
+                          Width="140"
+                          SelectionChanged="LoadModeComboBox_SelectionChanged">
+                    <x:String>All</x:String>
+                    <x:String>BUY/SELL</x:String>
+                    <x:String>Symbol</x:String>
+                </ComboBox>
+
+                <ComboBox x:Name="SymbolComboBox"
+                          Width="200"
+                          PlaceholderText="Selecciona símbolo"
+                          SelectionChanged="SymbolComboBox_SelectionChanged"/>
+
             </StackPanel>
         </Border>
 
