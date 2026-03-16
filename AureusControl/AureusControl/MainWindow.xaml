@@ -81,6 +81,13 @@
                     <TextBlock x:Name="DbStatusText" Text="Sin conexión" VerticalAlignment="Center"/>
                 </StackPanel>
 
+                <CheckBox x:Name="UseTestnetCheckBox"
+                          Content="Use Testnet"
+                          VerticalAlignment="Center"
+                          IsChecked="True"
+                          Checked="UseTestnetCheckBox_Changed"
+                          Unchecked="UseTestnetCheckBox_Changed"/>
+
             </StackPanel>
         </Border>
 
@@ -129,6 +136,12 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
+                <NavigationViewItem x:Name="DbTablesTab" Content="DB Tables" Tag="dbtables">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="List"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+
             </NavigationView.MenuItems>
 
             <Grid>
@@ -144,7 +157,33 @@
                     <TextBlock x:Name="ViewerStatusText" Opacity="0.8"/>
                 </StackPanel>
 
-                <Frame x:Name="ContentFrame" Grid.Row="1"/>
+                <Grid Grid.Row="1">
+                    <Frame x:Name="ContentFrame"/>
+
+                    <ScrollViewer x:Name="DbTablesPanel" Visibility="Collapsed" Padding="20">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Tablas de base de datos" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="DbTablesModeText" Opacity="0.85"/>
+
+                            <Grid ColumnSpacing="20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Spacing="8">
+                                    <TextBlock Text="Modo Live" FontWeight="SemiBold"/>
+                                    <ListView x:Name="LiveTablesListView" MinHeight="240"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Spacing="8">
+                                    <TextBlock Text="Modo Testnet (_testnet)" FontWeight="SemiBold"/>
+                                    <ListView x:Name="TestnetTablesListView" MinHeight="240"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
             </Grid>
 
         </NavigationView>

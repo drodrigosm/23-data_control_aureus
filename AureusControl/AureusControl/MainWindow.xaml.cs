@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using AureusControl.Core.Models;
 using AureusControl.Core.Services;
 using AureusControl.Core.Services.Parsers;
@@ -21,6 +22,8 @@ namespace AureusControl
         private readonly DbConnectionService _dbConnectionService = new();
         private BotExecutionFiles _loadedFiles = new();
         private DbConnectionSettings _dbSettings = new();
+        private IReadOnlyList<string> _liveTables = Array.Empty<string>();
+        private IReadOnlyList<string> _testnetTables = Array.Empty<string>();
 
         private bool _suppressSelectorEvents;
 
@@ -35,6 +38,7 @@ namespace AureusControl
 
             _dbSettings = _dbSettingsStore.Load();
             SetDbStatusIndicator(false, "Sin conexión");
+            UpdateDbModeText();
             _ = AutoConnectOnStartupAsync();
         }
 
@@ -106,6 +110,12 @@ namespace AureusControl
             if (NavView.SelectedItem is not NavigationViewItem selectedItem)
                 return;
 
+            if (string.Equals(selectedItem.Tag?.ToString(), "dbtables", StringComparison.OrdinalIgnoreCase))
+            {
+                await LoadAndShowDbTablesAsync();
+                return;
+            }
+
             if (string.Equals(selectedItem.Tag?.ToString(), "charts", StringComparison.OrdinalIgnoreCase))
             {
                 var csvReadable = CanReadFile(_loadedFiles.CsvPath);
@@ -115,6 +125,9 @@ namespace AureusControl
                 _viewerPage.Clear();
                 return;
             }
+
+            DbTablesPanel.Visibility = Visibility.Collapsed;
+            ContentFrame.Visibility = Visibility.Visible;
 
             string? path = selectedItem.Tag?.ToString() switch
             {
@@ -307,12 +320,27 @@ namespace AureusControl
             {
                 SetDbStatusIndicator(false, "Sin conexión");
             }
+
+            if (NavView.SelectedItem == DbTablesTab)
+                await LoadAndShowDbTablesAsync();
         }
 
-        private async System.Threading.Tasks.Task ConnectAndReflectStatusAsync(DbConnectionSettings settings)
+        private async Task ConnectAndReflectStatusAsync(DbConnectionSettings settings)
         {
-            var (connected, _) = await _dbConnectionService.TestConnectionAsync(settings);
+            var (connected, message) = await _dbConnectionService.TestConnectionAsync(settings);
             SetDbStatusIndicator(connected, connected ? "Conectado" : "Sin conexión");
+
+            if (!connected)
+            {
+                _liveTables = Array.Empty<string>();
+                _testnetTables = Array.Empty<string>();
+                LiveTablesListView.ItemsSource = _liveTables;
+                TestnetTablesListView.ItemsSource = _testnetTables;
+                ViewerStatusText.Text = $"Sin conexión DB: {message}";
+                return;
+            }
+
+            await RefreshDbTablesAsync();
         }
 
         private DbConnectionSettings? BuildSettingsFromControls(
@@ -335,6 +363,54 @@ namespace AureusControl
                 Password = passBox.Password ?? string.Empty,
                 AutoConnectOnStartup = autoConnectBox.IsChecked == true
             };
+        }
+
+        private async Task RefreshDbTablesAsync()
+        {
+            var result = await _dbConnectionService.GetBotTablesAsync(_dbSettings);
+            if (!result.Success)
+            {
+                _liveTables = Array.Empty<string>();
+                _testnetTables = Array.Empty<string>();
+                LiveTablesListView.ItemsSource = _liveTables;
+                TestnetTablesListView.ItemsSource = _testnetTables;
+                ViewerStatusText.Text = $"No se pudieron cargar tablas DB: {result.Message}";
+                return;
+            }
+
+            _liveTables = result.LiveTables;
+            _testnetTables = result.TestnetTables;
+            LiveTablesListView.ItemsSource = _liveTables;
+            TestnetTablesListView.ItemsSource = _testnetTables;
+        }
+
+        private async Task LoadAndShowDbTablesAsync()
+        {
+            DbTablesPanel.Visibility = Visibility.Visible;
+            ContentFrame.Visibility = Visibility.Collapsed;
+            UpdateDbModeText();
+
+            await RefreshDbTablesAsync();
+
+            var selectedMode = UseTestnetCheckBox.IsChecked == true ? "testnet" : "live";
+            var count = UseTestnetCheckBox.IsChecked == true ? _testnetTables.Count : _liveTables.Count;
+            ViewerStatusText.Text = $"DB Tables ({selectedMode}): {count} tablas.";
+        }
+
+        private void UpdateDbModeText()
+        {
+            var usingTestnet = UseTestnetCheckBox.IsChecked == true;
+            DbTablesModeText.Text = usingTestnet
+                ? "Modo activo: Testnet (tablas con sufijo _testnet)."
+                : "Modo activo: Live (tablas sin sufijo _testnet).";
+        }
+
+        private async void UseTestnetCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateDbModeText();
+
+            if (NavView.SelectedItem == DbTablesTab)
+                await LoadAndShowDbTablesAsync();
         }
 
         private void SetDbStatusIndicator(bool connected, string text)

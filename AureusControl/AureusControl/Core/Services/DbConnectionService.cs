@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AureusControl.Core.Models;
@@ -22,6 +23,67 @@ namespace AureusControl.Core.Services
             if (string.IsNullOrWhiteSpace(settings.Username))
                 return (false, "El usuario es obligatorio.");
 
+            var connectionString = BuildConnectionString(settings);
+
+            try
+            {
+                await using var connection = new MySqlConnection(connectionString);
+                await connection.OpenAsync(cancellationToken);
+                await connection.CloseAsync();
+
+                return (true, "Conexión correcta.");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message);
+            }
+        }
+
+        public async Task<(bool Success, string Message, IReadOnlyList<string> LiveTables, IReadOnlyList<string> TestnetTables)> GetBotTablesAsync(
+            DbConnectionSettings settings,
+            CancellationToken cancellationToken = default)
+        {
+            var validation = await TestConnectionAsync(settings, cancellationToken);
+            if (!validation.IsConnected)
+                return (false, validation.Message, Array.Empty<string>(), Array.Empty<string>());
+
+            var liveTables = new List<string>();
+            var testnetTables = new List<string>();
+
+            try
+            {
+                await using var connection = new MySqlConnection(BuildConnectionString(settings));
+                await connection.OpenAsync(cancellationToken);
+
+                const string sql = @"
+                    SELECT TABLE_NAME
+                    FROM information_schema.tables
+                    WHERE TABLE_SCHEMA = @schema
+                    ORDER BY TABLE_NAME;";
+
+                await using var cmd = new MySqlCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@schema", settings.Database);
+
+                await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var tableName = reader.GetString(0);
+                    if (tableName.EndsWith("_testnet", StringComparison.OrdinalIgnoreCase))
+                        testnetTables.Add(tableName);
+                    else
+                        liveTables.Add(tableName);
+                }
+
+                return (true, "Tablas cargadas.", liveTables, testnetTables);
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message, Array.Empty<string>(), Array.Empty<string>());
+            }
+        }
+
+        private static string BuildConnectionString(DbConnectionSettings settings)
+        {
             var connectionStringBuilder = new MySqlConnectionStringBuilder
             {
                 Server = settings.Host,
@@ -34,18 +96,7 @@ namespace AureusControl.Core.Services
                 Pooling = true
             };
 
-            try
-            {
-                await using var connection = new MySqlConnection(connectionStringBuilder.ConnectionString);
-                await connection.OpenAsync(cancellationToken);
-                await connection.CloseAsync();
-
-                return (true, "Conexión correcta.");
-            }
-            catch (Exception ex)
-            {
-                return (false, ex.Message);
-            }
+            return connectionStringBuilder.ConnectionString;
         }
     }
 }
