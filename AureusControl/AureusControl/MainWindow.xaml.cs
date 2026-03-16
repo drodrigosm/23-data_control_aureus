@@ -6,8 +6,10 @@ using AureusControl.Core.Models;
 using AureusControl.Core.Services;
 using AureusControl.Core.Services.Parsers;
 using AureusControl.Views;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace AureusControl
 {
@@ -15,7 +17,10 @@ namespace AureusControl
     {
         private readonly BotFileLocatorService _locator = new();
         private readonly LargeFileViewerPage _viewerPage = new();
+        private readonly DbConnectionSettingsStore _dbSettingsStore = new();
+        private readonly DbConnectionService _dbConnectionService = new();
         private BotExecutionFiles _loadedFiles = new();
+        private DbConnectionSettings _dbSettings = new();
 
         private bool _suppressSelectorEvents;
 
@@ -27,6 +32,25 @@ namespace AureusControl
 
             LoadModeComboBox.SelectedItem = "Symbol";
             SymbolComboBox.Visibility = Visibility.Visible;
+
+            _dbSettings = _dbSettingsStore.Load();
+            SetDbStatusIndicator(false, "Sin conexión");
+            _ = AutoConnectOnStartupAsync();
+        }
+
+        private async System.Threading.Tasks.Task AutoConnectOnStartupAsync()
+        {
+            if (!_dbSettings.AutoConnectOnStartup)
+                return;
+
+            try
+            {
+                await ConnectAndReflectStatusAsync(_dbSettings);
+            }
+            catch
+            {
+                SetDbStatusIndicator(false, "Sin conexión");
+            }
         }
 
         private async void LoadBot_Click(object sender, RoutedEventArgs e)
@@ -198,6 +222,125 @@ namespace AureusControl
             {
                 return false;
             }
+        }
+
+        private async void DbConfig_Click(object sender, RoutedEventArgs e)
+        {
+            var hostBox = new TextBox { Header = "Host", Text = _dbSettings.Host };
+            var portBox = new TextBox { Header = "Puerto", Text = _dbSettings.Port.ToString() };
+            var dbBox = new TextBox { Header = "Database", Text = _dbSettings.Database };
+            var userBox = new TextBox { Header = "Usuario", Text = _dbSettings.Username };
+            var passBox = new PasswordBox { Header = "Password", Password = _dbSettings.Password };
+            var autoConnectBox = new CheckBox
+            {
+                Content = "Conectar automáticamente al iniciar",
+                IsChecked = _dbSettings.AutoConnectOnStartup
+            };
+            var testButton = new Button
+            {
+                Content = "Connect",
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            var feedbackText = new TextBlock { Opacity = 0.85, Text = "Prueba la conexión antes de guardar." };
+
+            var panel = new StackPanel { Spacing = 10 };
+            panel.Children.Add(hostBox);
+            panel.Children.Add(portBox);
+            panel.Children.Add(dbBox);
+            panel.Children.Add(userBox);
+            panel.Children.Add(passBox);
+            panel.Children.Add(autoConnectBox);
+            panel.Children.Add(testButton);
+            panel.Children.Add(feedbackText);
+
+            var dialog = new ContentDialog
+            {
+                XamlRoot = Content.XamlRoot,
+                Title = "DB Config",
+                PrimaryButtonText = "Guardar",
+                CloseButtonText = "Cancelar",
+                DefaultButton = ContentDialogButton.Primary,
+                Content = panel
+            };
+
+            testButton.Click += async (_, __) =>
+            {
+                var candidate = BuildSettingsFromControls(hostBox, portBox, dbBox, userBox, passBox, autoConnectBox);
+                if (candidate is null)
+                {
+                    feedbackText.Foreground = new SolidColorBrush(Colors.OrangeRed);
+                    feedbackText.Text = "Puerto inválido.";
+                    SetDbStatusIndicator(false, "Sin conexión");
+                    return;
+                }
+
+                testButton.IsEnabled = false;
+                SetDbStatusIndicator(false, "Conectando...");
+                feedbackText.Foreground = new SolidColorBrush(Colors.DodgerBlue);
+                feedbackText.Text = "Conectando...";
+                var (connected, message) = await _dbConnectionService.TestConnectionAsync(candidate);
+                feedbackText.Foreground = new SolidColorBrush(connected ? Colors.ForestGreen : Colors.OrangeRed);
+                feedbackText.Text = connected ? "Conexión correcta." : $"Sin conexión: {message}";
+                SetDbStatusIndicator(connected, connected ? "Conectado" : "Sin conexión");
+                testButton.IsEnabled = true;
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+                return;
+
+            var settings = BuildSettingsFromControls(hostBox, portBox, dbBox, userBox, passBox, autoConnectBox);
+            if (settings is null)
+            {
+                SetDbStatusIndicator(false, "Sin conexión");
+                return;
+            }
+
+            _dbSettings = settings;
+            _dbSettingsStore.Save(_dbSettings);
+
+            if (_dbSettings.AutoConnectOnStartup)
+            {
+                await ConnectAndReflectStatusAsync(_dbSettings);
+            }
+            else
+            {
+                SetDbStatusIndicator(false, "Sin conexión");
+            }
+        }
+
+        private async System.Threading.Tasks.Task ConnectAndReflectStatusAsync(DbConnectionSettings settings)
+        {
+            var (connected, _) = await _dbConnectionService.TestConnectionAsync(settings);
+            SetDbStatusIndicator(connected, connected ? "Conectado" : "Sin conexión");
+        }
+
+        private DbConnectionSettings? BuildSettingsFromControls(
+            TextBox hostBox,
+            TextBox portBox,
+            TextBox dbBox,
+            TextBox userBox,
+            PasswordBox passBox,
+            CheckBox autoConnectBox)
+        {
+            if (!int.TryParse(portBox.Text?.Trim(), out var port))
+                return null;
+
+            return new DbConnectionSettings
+            {
+                Host = hostBox.Text?.Trim() ?? string.Empty,
+                Port = port,
+                Database = dbBox.Text?.Trim() ?? string.Empty,
+                Username = userBox.Text?.Trim() ?? string.Empty,
+                Password = passBox.Password ?? string.Empty,
+                AutoConnectOnStartup = autoConnectBox.IsChecked == true
+            };
+        }
+
+        private void SetDbStatusIndicator(bool connected, string text)
+        {
+            DbStatusLamp.Fill = new SolidColorBrush(connected ? Colors.LimeGreen : Colors.Red);
+            DbStatusText.Text = text;
         }
     }
 }

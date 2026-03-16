@@ -32,6 +32,10 @@
                 <MenuFlyoutItem Text="Acerca de"/>
             </MenuBarItem>
 
+            <MenuBarItem Title="Settings">
+                <MenuFlyoutItem Text="DB Config" Click="DbConfig_Click"/>
+            </MenuBarItem>
+
         </MenuBar>
 
         <!-- ===== TOOLBAR SUPERIOR ===== -->
@@ -70,6 +74,12 @@
                           Width="200"
                           PlaceholderText="Selecciona símbolo"
                           SelectionChanged="SymbolComboBox_SelectionChanged"/>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="6">
+                    <TextBlock Text="DB" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                    <Ellipse x:Name="DbStatusLamp" Width="14" Height="14" Fill="Red"/>
+                    <TextBlock x:Name="DbStatusText" Text="Sin conexión" VerticalAlignment="Center"/>
+                </StackPanel>
 
             </StackPanel>
         </Border>
