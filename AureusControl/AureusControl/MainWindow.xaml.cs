@@ -38,16 +38,14 @@ namespace AureusControl
 
             _dbSettings = _dbSettingsStore.Load();
             SetDbStatusIndicator(false, "Sin conexión");
-            Loaded += MainWindow_Loaded;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                UpdateDbModeText();
+                UpdateDbTablesBindings();
+            });
             _ = AutoConnectOnStartupAsync();
         }
 
-
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            UpdateDbModeText();
-            UpdateDbTablesBindings();
-        }
 
         private async System.Threading.Tasks.Task AutoConnectOnStartupAsync()
         {
