@@ -394,20 +394,32 @@ namespace AureusControl
 
             await RefreshDbTablesAsync();
 
-            var selectedMode = UseTestnetCheckBox.IsChecked == true ? "testnet" : "live";
-            var count = UseTestnetCheckBox.IsChecked == true ? _testnetTables.Count : _liveTables.Count;
+            var selectedMode = LiveModeCheckBox?.IsChecked == true ? "live" : "testnet";
+            var count = LiveModeCheckBox?.IsChecked == true ? _liveTables.Count : _testnetTables.Count;
             ViewerStatusText.Text = $"DB Tables ({selectedMode}): {count} tablas.";
         }
 
         private void UpdateDbModeText()
         {
-            if (UseTestnetCheckBox is null || DbTablesModeText is null)
+            if (LiveModeCheckBox is null || DbTablesModeText is null)
                 return;
 
-            var usingTestnet = UseTestnetCheckBox.IsChecked == true;
-            DbTablesModeText.Text = usingTestnet
-                ? "Modo activo: Testnet (tablas con sufijo _testnet)."
-                : "Modo activo: Live (tablas sin sufijo _testnet).";
+            var usingLive = LiveModeCheckBox.IsChecked == true;
+            DbTablesModeText.Text = usingLive
+                ? "Modo activo: Live (tablas sin sufijo _testnet)."
+                : "Modo activo: Testnet (tablas con sufijo _testnet).";
+
+            UpdateTablesModeVisibility();
+        }
+
+        private void UpdateTablesModeVisibility()
+        {
+            if (LiveModeCheckBox is null || LiveTablesSection is null || TestnetTablesSection is null)
+                return;
+
+            var showLive = LiveModeCheckBox.IsChecked == true;
+            LiveTablesSection.Visibility = showLive ? Visibility.Visible : Visibility.Collapsed;
+            TestnetTablesSection.Visibility = showLive ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void UpdateDbTablesBindings()
@@ -419,11 +431,11 @@ namespace AureusControl
             TestnetTablesListView.ItemsSource = _testnetTables;
         }
 
-        private async void UseTestnetCheckBox_Changed(object sender, RoutedEventArgs e)
+        private async void LiveModeCheckBox_Changed(object sender, RoutedEventArgs e)
         {
             UpdateDbModeText();
 
-            if (NavView is null || DbTablesTab is null)
+            if (LiveModeCheckBox is null || NavView is null || DbTablesTab is null)
                 return;
 
             if (NavView.SelectedItem == DbTablesTab)

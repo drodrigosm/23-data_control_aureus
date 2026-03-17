@@ -81,12 +81,12 @@
                     <TextBlock x:Name="DbStatusText" Text="Sin conexión" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <CheckBox x:Name="UseTestnetCheckBox"
-                          Content="Use Testnet"
+                <CheckBox x:Name="LiveModeCheckBox"
+                          Content="Live"
                           VerticalAlignment="Center"
-                          IsChecked="True"
-                          Checked="UseTestnetCheckBox_Changed"
-                          Unchecked="UseTestnetCheckBox_Changed"/>
+                          IsChecked="False"
+                          Checked="LiveModeCheckBox_Changed"
+                          Unchecked="LiveModeCheckBox_Changed"/>
 
             </StackPanel>
         </Border>
@@ -171,12 +171,12 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0" Spacing="8">
+                                <StackPanel x:Name="LiveTablesSection" Grid.Column="0" Spacing="8">
                                     <TextBlock Text="Modo Live" FontWeight="SemiBold"/>
                                     <ListView x:Name="LiveTablesListView" MinHeight="240"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Column="1" Spacing="8">
+                                <StackPanel x:Name="TestnetTablesSection" Grid.Column="1" Spacing="8">
                                     <TextBlock Text="Modo Testnet (_testnet)" FontWeight="SemiBold"/>
                                     <ListView x:Name="TestnetTablesListView" MinHeight="240"/>
                                 </StackPanel>
