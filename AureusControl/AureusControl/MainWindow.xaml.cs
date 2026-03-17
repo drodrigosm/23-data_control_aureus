@@ -423,6 +423,9 @@ namespace AureusControl
         {
             UpdateDbModeText();
 
+            if (NavView is null || DbTablesTab is null)
+                return;
+
             if (NavView.SelectedItem == DbTablesTab)
                 await LoadAndShowDbTablesAsync();
         }
