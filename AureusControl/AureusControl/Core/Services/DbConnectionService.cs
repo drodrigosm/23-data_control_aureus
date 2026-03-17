@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AureusControl.Core.Models;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using MySqlConnector;
 
 namespace AureusControl.Core.Services
@@ -50,6 +52,7 @@ namespace AureusControl.Core.Services
 
             var records = new List<SummaryRecord>();
             var tableName = liveMode ? "bot_instances" : "bot_instances_testnet";
+            var hiddenFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "ip", "tailscale_ip", "api_port" };
 
             try
             {
@@ -69,18 +72,22 @@ namespace AureusControl.Core.Services
                     var fields = new List<SummaryField>();
                     string? botId = null;
                     string? executionName = null;
+                    string status = string.Empty;
 
                     for (var i = 0; i < reader.FieldCount; i++)
                     {
                         var key = reader.GetName(i);
                         var rawValue = reader.IsDBNull(i) ? null : reader.GetValue(i);
                         var value = rawValue?.ToString() ?? "NULL";
-                        fields.Add(new SummaryField { Key = key, Value = value });
+                        if (!hiddenFields.Contains(key))
+                            fields.Add(new SummaryField { Key = key, Value = value });
 
                         if (string.Equals(key, "bot_id", StringComparison.OrdinalIgnoreCase))
                             botId = value;
                         else if (string.Equals(key, "execution_name", StringComparison.OrdinalIgnoreCase))
                             executionName = value;
+                        else if (string.Equals(key, "status", StringComparison.OrdinalIgnoreCase))
+                            status = value;
                     }
 
                     var title = !string.IsNullOrWhiteSpace(executionName)
@@ -90,6 +97,8 @@ namespace AureusControl.Core.Services
                     records.Add(new SummaryRecord
                     {
                         Title = title,
+                        Status = status,
+                        StatusBrush = ResolveStatusBrush(status),
                         Fields = fields
                     });
                 }
@@ -100,6 +109,18 @@ namespace AureusControl.Core.Services
             {
                 return (false, ex.Message, Array.Empty<SummaryRecord>());
             }
+        }
+
+
+        private static Brush ResolveStatusBrush(string? status)
+        {
+            if (string.Equals(status, "running", StringComparison.OrdinalIgnoreCase))
+                return new SolidColorBrush(Colors.LimeGreen);
+
+            if (string.Equals(status, "stopped", StringComparison.OrdinalIgnoreCase))
+                return new SolidColorBrush(Colors.Red);
+
+            return new SolidColorBrush(Colors.Orange);
         }
 
         private static string BuildConnectionString(DbConnectionSettings settings)
