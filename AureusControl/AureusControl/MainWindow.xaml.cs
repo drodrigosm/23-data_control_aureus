@@ -38,8 +38,15 @@ namespace AureusControl
 
             _dbSettings = _dbSettingsStore.Load();
             SetDbStatusIndicator(false, "Sin conexión");
-            UpdateDbModeText();
+            Loaded += MainWindow_Loaded;
             _ = AutoConnectOnStartupAsync();
+        }
+
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdateDbModeText();
+            UpdateDbTablesBindings();
         }
 
         private async System.Threading.Tasks.Task AutoConnectOnStartupAsync()
@@ -334,8 +341,7 @@ namespace AureusControl
             {
                 _liveTables = Array.Empty<string>();
                 _testnetTables = Array.Empty<string>();
-                LiveTablesListView.ItemsSource = _liveTables;
-                TestnetTablesListView.ItemsSource = _testnetTables;
+                UpdateDbTablesBindings();
                 ViewerStatusText.Text = $"Sin conexión DB: {message}";
                 return;
             }
@@ -372,16 +378,14 @@ namespace AureusControl
             {
                 _liveTables = Array.Empty<string>();
                 _testnetTables = Array.Empty<string>();
-                LiveTablesListView.ItemsSource = _liveTables;
-                TestnetTablesListView.ItemsSource = _testnetTables;
+                UpdateDbTablesBindings();
                 ViewerStatusText.Text = $"No se pudieron cargar tablas DB: {result.Message}";
                 return;
             }
 
             _liveTables = result.LiveTables;
             _testnetTables = result.TestnetTables;
-            LiveTablesListView.ItemsSource = _liveTables;
-            TestnetTablesListView.ItemsSource = _testnetTables;
+            UpdateDbTablesBindings();
         }
 
         private async Task LoadAndShowDbTablesAsync()
@@ -399,10 +403,22 @@ namespace AureusControl
 
         private void UpdateDbModeText()
         {
+            if (UseTestnetCheckBox is null || DbTablesModeText is null)
+                return;
+
             var usingTestnet = UseTestnetCheckBox.IsChecked == true;
             DbTablesModeText.Text = usingTestnet
                 ? "Modo activo: Testnet (tablas con sufijo _testnet)."
                 : "Modo activo: Live (tablas sin sufijo _testnet).";
+        }
+
+        private void UpdateDbTablesBindings()
+        {
+            if (LiveTablesListView is null || TestnetTablesListView is null)
+                return;
+
+            LiveTablesListView.ItemsSource = _liveTables;
+            TestnetTablesListView.ItemsSource = _testnetTables;
         }
 
         private async void UseTestnetCheckBox_Changed(object sender, RoutedEventArgs e)
@@ -415,8 +431,11 @@ namespace AureusControl
 
         private void SetDbStatusIndicator(bool connected, string text)
         {
-            DbStatusLamp.Fill = new SolidColorBrush(connected ? Colors.LimeGreen : Colors.Red);
-            DbStatusText.Text = text;
+            if (DbStatusLamp is not null)
+                DbStatusLamp.Fill = new SolidColorBrush(connected ? Colors.LimeGreen : Colors.Red);
+
+            if (DbStatusText is not null)
+                DbStatusText.Text = text;
         }
     }
 }
