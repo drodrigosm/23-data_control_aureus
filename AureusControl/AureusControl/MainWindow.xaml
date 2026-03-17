@@ -136,7 +136,7 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
 
-                <NavigationViewItem x:Name="DbTablesTab" Content="DB Tables" Tag="dbtables">
+                <NavigationViewItem x:Name="SummaryTab" Content="Summary" Tag="summary">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="List"/>
                     </NavigationViewItem.Icon>
@@ -160,27 +160,41 @@
                 <Grid Grid.Row="1">
                     <Frame x:Name="ContentFrame"/>
 
-                    <ScrollViewer x:Name="DbTablesPanel" Visibility="Collapsed" Padding="20">
+                    <ScrollViewer x:Name="SummaryPanel" Visibility="Collapsed" Padding="20">
                         <StackPanel Spacing="12">
-                            <TextBlock Text="Tablas de base de datos" FontSize="20" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="DbTablesModeText" Opacity="0.85"/>
+                            <TextBlock Text="Summary de bots running" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="SummaryModeText" Opacity="0.85"/>
 
-                            <Grid ColumnSpacing="20">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel x:Name="LiveTablesSection" Grid.Column="0" Spacing="8">
-                                    <TextBlock Text="Modo Live" FontWeight="SemiBold"/>
-                                    <ListView x:Name="LiveTablesListView" MinHeight="240"/>
-                                </StackPanel>
-
-                                <StackPanel x:Name="TestnetTablesSection" Grid.Column="1" Spacing="8">
-                                    <TextBlock Text="Modo Testnet (_testnet)" FontWeight="SemiBold"/>
-                                    <ListView x:Name="TestnetTablesListView" MinHeight="240"/>
-                                </StackPanel>
-                            </Grid>
+                            <ListView x:Name="SummaryListView" SelectionMode="None">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,12"
+                                                Padding="14"
+                                                CornerRadius="10"
+                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                BorderThickness="1"
+                                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold"/>
+                                                <ItemsControl ItemsSource="{Binding Fields}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid ColumnSpacing="10" Margin="0,2,0,2">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="220"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" Text="{Binding Key}" FontWeight="SemiBold" Opacity="0.85"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding Value}" TextWrapping="Wrap"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

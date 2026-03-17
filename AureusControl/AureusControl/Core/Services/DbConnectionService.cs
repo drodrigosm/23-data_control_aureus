@@ -39,46 +39,66 @@ namespace AureusControl.Core.Services
             }
         }
 
-        public async Task<(bool Success, string Message, IReadOnlyList<string> LiveTables, IReadOnlyList<string> TestnetTables)> GetBotTablesAsync(
+        public async Task<(bool Success, string Message, IReadOnlyList<SummaryRecord> Records)> GetRunningInstancesSummaryAsync(
             DbConnectionSettings settings,
+            bool liveMode,
             CancellationToken cancellationToken = default)
         {
             var validation = await TestConnectionAsync(settings, cancellationToken);
             if (!validation.IsConnected)
-                return (false, validation.Message, Array.Empty<string>(), Array.Empty<string>());
+                return (false, validation.Message, Array.Empty<SummaryRecord>());
 
-            var liveTables = new List<string>();
-            var testnetTables = new List<string>();
+            var records = new List<SummaryRecord>();
+            var tableName = liveMode ? "bot_instances" : "bot_instances_testnet";
 
             try
             {
                 await using var connection = new MySqlConnection(BuildConnectionString(settings));
                 await connection.OpenAsync(cancellationToken);
 
-                const string sql = @"
-                    SELECT TABLE_NAME
-                    FROM information_schema.tables
-                    WHERE TABLE_SCHEMA = @schema
-                    ORDER BY TABLE_NAME;";
+                var sql = $@"
+                    SELECT *
+                    FROM `{tableName}`
+                    WHERE LOWER(COALESCE(status, '')) = 'running'";
 
                 await using var cmd = new MySqlCommand(sql, connection);
-                cmd.Parameters.AddWithValue("@schema", settings.Database);
-
                 await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
                 while (await reader.ReadAsync(cancellationToken))
                 {
-                    var tableName = reader.GetString(0);
-                    if (tableName.EndsWith("_testnet", StringComparison.OrdinalIgnoreCase))
-                        testnetTables.Add(tableName);
-                    else
-                        liveTables.Add(tableName);
+                    var fields = new List<SummaryField>();
+                    string? botId = null;
+                    string? executionName = null;
+
+                    for (var i = 0; i < reader.FieldCount; i++)
+                    {
+                        var key = reader.GetName(i);
+                        var rawValue = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                        var value = rawValue?.ToString() ?? "NULL";
+                        fields.Add(new SummaryField { Key = key, Value = value });
+
+                        if (string.Equals(key, "bot_id", StringComparison.OrdinalIgnoreCase))
+                            botId = value;
+                        else if (string.Equals(key, "execution_name", StringComparison.OrdinalIgnoreCase))
+                            executionName = value;
+                    }
+
+                    var title = !string.IsNullOrWhiteSpace(executionName)
+                        ? executionName!
+                        : (!string.IsNullOrWhiteSpace(botId) ? $"Bot {botId}" : "Instancia running");
+
+                    records.Add(new SummaryRecord
+                    {
+                        Title = title,
+                        Fields = fields
+                    });
                 }
 
-                return (true, "Tablas cargadas.", liveTables, testnetTables);
+                return (true, "Resumen cargado.", records);
             }
             catch (Exception ex)
             {
-                return (false, ex.Message, Array.Empty<string>(), Array.Empty<string>());
+                return (false, ex.Message, Array.Empty<SummaryRecord>());
             }
         }
 

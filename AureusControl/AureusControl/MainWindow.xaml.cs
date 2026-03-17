@@ -22,8 +22,7 @@ namespace AureusControl
         private readonly DbConnectionService _dbConnectionService = new();
         private BotExecutionFiles _loadedFiles = new();
         private DbConnectionSettings _dbSettings = new();
-        private IReadOnlyList<string> _liveTables = Array.Empty<string>();
-        private IReadOnlyList<string> _testnetTables = Array.Empty<string>();
+        private IReadOnlyList<SummaryRecord> _summaryRecords = Array.Empty<SummaryRecord>();
 
         private bool _suppressSelectorEvents;
 
@@ -40,8 +39,8 @@ namespace AureusControl
             SetDbStatusIndicator(false, "Sin conexión");
             DispatcherQueue.TryEnqueue(() =>
             {
-                UpdateDbModeText();
-                UpdateDbTablesBindings();
+                UpdateSummaryModeText();
+                UpdateSummaryBindings();
             });
             _ = AutoConnectOnStartupAsync();
         }
@@ -115,9 +114,9 @@ namespace AureusControl
             if (NavView.SelectedItem is not NavigationViewItem selectedItem)
                 return;
 
-            if (string.Equals(selectedItem.Tag?.ToString(), "dbtables", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(selectedItem.Tag?.ToString(), "summary", StringComparison.OrdinalIgnoreCase))
             {
-                await LoadAndShowDbTablesAsync();
+                await LoadAndShowSummaryAsync();
                 return;
             }
 
@@ -131,7 +130,7 @@ namespace AureusControl
                 return;
             }
 
-            DbTablesPanel.Visibility = Visibility.Collapsed;
+            SummaryPanel.Visibility = Visibility.Collapsed;
             ContentFrame.Visibility = Visibility.Visible;
 
             string? path = selectedItem.Tag?.ToString() switch
@@ -326,8 +325,8 @@ namespace AureusControl
                 SetDbStatusIndicator(false, "Sin conexión");
             }
 
-            if (NavView.SelectedItem == DbTablesTab)
-                await LoadAndShowDbTablesAsync();
+            if (NavView.SelectedItem == SummaryTab)
+                await LoadAndShowSummaryAsync();
         }
 
         private async Task ConnectAndReflectStatusAsync(DbConnectionSettings settings)
@@ -337,14 +336,13 @@ namespace AureusControl
 
             if (!connected)
             {
-                _liveTables = Array.Empty<string>();
-                _testnetTables = Array.Empty<string>();
-                UpdateDbTablesBindings();
+                _summaryRecords = Array.Empty<SummaryRecord>();
+                UpdateSummaryBindings();
                 ViewerStatusText.Text = $"Sin conexión DB: {message}";
                 return;
             }
 
-            await RefreshDbTablesAsync();
+            await RefreshSummaryAsync();
         }
 
         private DbConnectionSettings? BuildSettingsFromControls(
@@ -369,77 +367,61 @@ namespace AureusControl
             };
         }
 
-        private async Task RefreshDbTablesAsync()
+        private async Task RefreshSummaryAsync()
         {
-            var result = await _dbConnectionService.GetBotTablesAsync(_dbSettings);
+            var result = await _dbConnectionService.GetRunningInstancesSummaryAsync(_dbSettings, LiveModeCheckBox?.IsChecked == true);
             if (!result.Success)
             {
-                _liveTables = Array.Empty<string>();
-                _testnetTables = Array.Empty<string>();
-                UpdateDbTablesBindings();
-                ViewerStatusText.Text = $"No se pudieron cargar tablas DB: {result.Message}";
+                _summaryRecords = Array.Empty<SummaryRecord>();
+                UpdateSummaryBindings();
+                ViewerStatusText.Text = $"No se pudo cargar Summary: {result.Message}";
                 return;
             }
 
-            _liveTables = result.LiveTables;
-            _testnetTables = result.TestnetTables;
-            UpdateDbTablesBindings();
+            _summaryRecords = result.Records;
+            UpdateSummaryBindings();
         }
 
-        private async Task LoadAndShowDbTablesAsync()
+        private async Task LoadAndShowSummaryAsync()
         {
-            DbTablesPanel.Visibility = Visibility.Visible;
+            SummaryPanel.Visibility = Visibility.Visible;
             ContentFrame.Visibility = Visibility.Collapsed;
-            UpdateDbModeText();
+            UpdateSummaryModeText();
 
-            await RefreshDbTablesAsync();
+            await RefreshSummaryAsync();
 
             var selectedMode = LiveModeCheckBox?.IsChecked == true ? "live" : "testnet";
-            var count = LiveModeCheckBox?.IsChecked == true ? _liveTables.Count : _testnetTables.Count;
-            ViewerStatusText.Text = $"DB Tables ({selectedMode}): {count} tablas.";
+            ViewerStatusText.Text = $"Summary ({selectedMode}): {_summaryRecords.Count} registros running.";
         }
 
-        private void UpdateDbModeText()
+        private void UpdateSummaryModeText()
         {
-            if (LiveModeCheckBox is null || DbTablesModeText is null)
+            if (LiveModeCheckBox is null || SummaryModeText is null)
                 return;
 
             var usingLive = LiveModeCheckBox.IsChecked == true;
-            DbTablesModeText.Text = usingLive
-                ? "Modo activo: Live (tablas sin sufijo _testnet)."
-                : "Modo activo: Testnet (tablas con sufijo _testnet).";
-
-            UpdateTablesModeVisibility();
+            SummaryModeText.Text = usingLive
+                ? "Modo activo: Live (tabla bot_instances con status = running)."
+                : "Modo activo: Testnet (tabla bot_instances_testnet con status = running).";
         }
 
-        private void UpdateTablesModeVisibility()
+        private void UpdateSummaryBindings()
         {
-            if (LiveModeCheckBox is null || LiveTablesSection is null || TestnetTablesSection is null)
+            if (SummaryListView is null)
                 return;
 
-            var showLive = LiveModeCheckBox.IsChecked == true;
-            LiveTablesSection.Visibility = showLive ? Visibility.Visible : Visibility.Collapsed;
-            TestnetTablesSection.Visibility = showLive ? Visibility.Collapsed : Visibility.Visible;
-        }
-
-        private void UpdateDbTablesBindings()
-        {
-            if (LiveTablesListView is null || TestnetTablesListView is null)
-                return;
-
-            LiveTablesListView.ItemsSource = _liveTables;
-            TestnetTablesListView.ItemsSource = _testnetTables;
+            SummaryListView.ItemsSource = _summaryRecords;
         }
 
         private async void LiveModeCheckBox_Changed(object sender, RoutedEventArgs e)
         {
-            UpdateDbModeText();
+            UpdateSummaryModeText();
 
-            if (LiveModeCheckBox is null || NavView is null || DbTablesTab is null)
+            if (LiveModeCheckBox is null || NavView is null || SummaryTab is null)
                 return;
 
-            if (NavView.SelectedItem == DbTablesTab)
-                await LoadAndShowDbTablesAsync();
+            if (NavView.SelectedItem == SummaryTab)
+                await LoadAndShowSummaryAsync();
         }
 
         private void SetDbStatusIndicator(bool connected, string text)
