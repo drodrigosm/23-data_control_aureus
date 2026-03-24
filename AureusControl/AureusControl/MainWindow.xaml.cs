@@ -6,10 +6,10 @@ using AureusControl.Core.Models;
 using AureusControl.Core.Services;
 using AureusControl.Core.Services.Parsers;
 using AureusControl.Views;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Windows.UI;
 
 namespace AureusControl
 {
