@@ -9,7 +9,6 @@ using AureusControl.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Windows.UI;
 
 namespace AureusControl
 {
@@ -49,7 +48,7 @@ namespace AureusControl
             DarkAppearanceItem.IsChecked = isDark;
 
             var backgroundColor = isDark ? ColorFromHex("#183140") : ColorFromHex("#F8F8F8");
-            var surfaceColor = isDark ? ColorFromHex("#5A6872") : Colors.White;
+            var surfaceColor = isDark ? ColorFromHex("#5A6872") : ColorFromHex("#FFFFFF");
             var primaryTextColor = isDark ? ColorFromHex("#F2BB77") : ColorFromHex("#1F2933");
             var secondaryTextColor = isDark ? ColorFromHex("#D9D9D9") : ColorFromHex("#5A6872");
             var accentColor = isDark ? ColorFromHex("#00B5E2") : ColorFromHex("#00B5E2");
@@ -61,14 +60,14 @@ namespace AureusControl
             RootGrid.Resources["AppAccentBrush"] = new SolidColorBrush(accentColor);
         }
 
-        private static Color ColorFromHex(string hex)
+        private static Windows.UI.Color ColorFromHex(string hex)
         {
             if (!hex.StartsWith('#'))
                 throw new ArgumentException("Hex color must start with #.", nameof(hex));
 
             if (hex.Length == 7)
             {
-                return Color.FromArgb(
+                return Windows.UI.Color.FromArgb(
                     0xFF,
                     Convert.ToByte(hex.Substring(1, 2), 16),
                     Convert.ToByte(hex.Substring(3, 2), 16),
@@ -77,7 +76,7 @@ namespace AureusControl
 
             if (hex.Length == 9)
             {
-                return Color.FromArgb(
+                return Windows.UI.Color.FromArgb(
                     Convert.ToByte(hex.Substring(1, 2), 16),
                     Convert.ToByte(hex.Substring(3, 2), 16),
                     Convert.ToByte(hex.Substring(5, 2), 16),
