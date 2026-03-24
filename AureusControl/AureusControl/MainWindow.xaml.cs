@@ -53,11 +53,11 @@ namespace AureusControl
             var secondaryTextColor = isDark ? ColorFromHex("#D9D9D9") : ColorFromHex("#5A6872");
             var accentColor = isDark ? ColorFromHex("#00B5E2") : ColorFromHex("#00B5E2");
 
-            RootGrid.Resources["AppBackgroundBrush"] = new SolidColorBrush(backgroundColor);
-            RootGrid.Resources["AppSurfaceBrush"] = new SolidColorBrush(surfaceColor);
-            RootGrid.Resources["AppPrimaryTextBrush"] = new SolidColorBrush(primaryTextColor);
-            RootGrid.Resources["AppSecondaryTextBrush"] = new SolidColorBrush(secondaryTextColor);
-            RootGrid.Resources["AppAccentBrush"] = new SolidColorBrush(accentColor);
+            Application.Current.Resources["AppBackgroundBrush"] = new SolidColorBrush(backgroundColor);
+            Application.Current.Resources["AppSurfaceBrush"] = new SolidColorBrush(surfaceColor);
+            Application.Current.Resources["AppPrimaryTextBrush"] = new SolidColorBrush(primaryTextColor);
+            Application.Current.Resources["AppSecondaryTextBrush"] = new SolidColorBrush(secondaryTextColor);
+            Application.Current.Resources["AppAccentBrush"] = new SolidColorBrush(accentColor);
         }
 
         private static Windows.UI.Color ColorFromHex(string hex)

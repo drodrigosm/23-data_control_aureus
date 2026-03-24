@@ -7,14 +7,6 @@
     <Grid x:Name="RootGrid"
           Background="{ThemeResource AppBackgroundBrush}">
 
-        <Grid.Resources>
-            <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FFF8F8F8"/>
-            <SolidColorBrush x:Key="AppSurfaceBrush" Color="#FFFFFFFF"/>
-            <SolidColorBrush x:Key="AppPrimaryTextBrush" Color="#FF1F2933"/>
-            <SolidColorBrush x:Key="AppSecondaryTextBrush" Color="#FF5A6872"/>
-            <SolidColorBrush x:Key="AppAccentBrush" Color="#FF00B5E2"/>
-        </Grid.Resources>
-
         <!-- ===== DEFINICIÓN DE FILAS ===== -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>  <!-- Menu -->

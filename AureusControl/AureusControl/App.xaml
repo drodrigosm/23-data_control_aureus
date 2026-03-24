@@ -5,7 +5,11 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+            <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FFF8F8F8"/>
+            <SolidColorBrush x:Key="AppSurfaceBrush" Color="#FFFFFFFF"/>
+            <SolidColorBrush x:Key="AppPrimaryTextBrush" Color="#FF1F2933"/>
+            <SolidColorBrush x:Key="AppSecondaryTextBrush" Color="#FF5A6872"/>
+            <SolidColorBrush x:Key="AppAccentBrush" Color="#FF00B5E2"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
