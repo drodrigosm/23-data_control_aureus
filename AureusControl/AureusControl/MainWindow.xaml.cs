@@ -8,6 +8,7 @@ using AureusControl.Core.Services.Parsers;
 using AureusControl.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace AureusControl
 {
@@ -27,6 +28,62 @@ namespace AureusControl
 
             LoadModeComboBox.SelectedItem = "Symbol";
             SymbolComboBox.Visibility = Visibility.Visible;
+            ApplyAppearanceMode(isDark: false);
+        }
+
+        private void LightAppearance_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyAppearanceMode(isDark: false);
+        }
+
+        private void DarkAppearance_Click(object sender, RoutedEventArgs e)
+        {
+            ApplyAppearanceMode(isDark: true);
+        }
+
+        private void ApplyAppearanceMode(bool isDark)
+        {
+            RootGrid.RequestedTheme = isDark ? ElementTheme.Dark : ElementTheme.Light;
+            LightAppearanceItem.IsChecked = !isDark;
+            DarkAppearanceItem.IsChecked = isDark;
+
+            var backgroundColor = isDark ? ColorFromHex("#183140") : ColorFromHex("#F8F8F8");
+            var surfaceColor = isDark ? ColorFromHex("#21465C") : ColorFromHex("#FFFFFF");
+            var primaryTextColor = isDark ? ColorFromHex("#F2BB77") : ColorFromHex("#1F2933");
+            var secondaryTextColor = isDark ? ColorFromHex("#D9D9D9") : ColorFromHex("#5A6872");
+            var accentColor = isDark ? ColorFromHex("#00B5E2") : ColorFromHex("#00B5E2");
+
+            Application.Current.Resources["AppBackgroundBrush"] = new SolidColorBrush(backgroundColor);
+            Application.Current.Resources["AppSurfaceBrush"] = new SolidColorBrush(surfaceColor);
+            Application.Current.Resources["AppPrimaryTextBrush"] = new SolidColorBrush(primaryTextColor);
+            Application.Current.Resources["AppSecondaryTextBrush"] = new SolidColorBrush(secondaryTextColor);
+            Application.Current.Resources["AppAccentBrush"] = new SolidColorBrush(accentColor);
+        }
+
+        private static Windows.UI.Color ColorFromHex(string hex)
+        {
+            if (!hex.StartsWith('#'))
+                throw new ArgumentException("Hex color must start with #.", nameof(hex));
+
+            if (hex.Length == 7)
+            {
+                return Windows.UI.Color.FromArgb(
+                    0xFF,
+                    Convert.ToByte(hex.Substring(1, 2), 16),
+                    Convert.ToByte(hex.Substring(3, 2), 16),
+                    Convert.ToByte(hex.Substring(5, 2), 16));
+            }
+
+            if (hex.Length == 9)
+            {
+                return Windows.UI.Color.FromArgb(
+                    Convert.ToByte(hex.Substring(1, 2), 16),
+                    Convert.ToByte(hex.Substring(3, 2), 16),
+                    Convert.ToByte(hex.Substring(5, 2), 16),
+                    Convert.ToByte(hex.Substring(7, 2), 16));
+            }
+
+            throw new ArgumentException("Hex color must be #RRGGBB or #AARRGGBB.", nameof(hex));
         }
 
         private async void LoadBot_Click(object sender, RoutedEventArgs e)

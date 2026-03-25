@@ -4,7 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="AureusControl">
 
-    <Grid>
+    <Grid x:Name="RootGrid"
+          Background="{ThemeResource AppBackgroundBrush}">
 
         <!-- ===== DEFINICIÓN DE FILAS ===== -->
         <Grid.RowDefinitions>
@@ -22,6 +23,17 @@
 
             <MenuBarItem Title="Ver">
                 <MenuFlyoutItem Text="Actualizar"/>
+                <MenuFlyoutSubItem Text="Appearance">
+                    <RadioMenuFlyoutItem x:Name="LightAppearanceItem"
+                                         Text="Light"
+                                         GroupName="AppearanceMode"
+                                         IsChecked="True"
+                                         Click="LightAppearance_Click"/>
+                    <RadioMenuFlyoutItem x:Name="DarkAppearanceItem"
+                                         Text="Dark"
+                                         GroupName="AppearanceMode"
+                                         Click="DarkAppearance_Click"/>
+                </MenuFlyoutSubItem>
             </MenuBarItem>
 
             <MenuBarItem Title="Herramientas">
@@ -36,7 +48,7 @@
 
         <!-- ===== TOOLBAR SUPERIOR ===== -->
         <Border Grid.Row="1"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Background="{ThemeResource AppSurfaceBrush}"
                 Padding="10">
 
             <StackPanel Orientation="Horizontal"
@@ -44,6 +56,7 @@
                         VerticalAlignment="Center">
 
                 <TextBlock Text="Bot ID:"
+                           Foreground="{ThemeResource AppPrimaryTextBrush}"
                            VerticalAlignment="Center"
                            FontWeight="SemiBold"/>
 
@@ -55,6 +68,7 @@
                         Click="LoadBot_Click"/>
 
                 <TextBlock Text="Modo"
+                           Foreground="{ThemeResource AppPrimaryTextBrush}"
                            VerticalAlignment="Center"
                            FontWeight="SemiBold"/>
 
@@ -77,6 +91,7 @@
         <!-- ===== CONTENIDO PRINCIPAL ===== -->
         <NavigationView Grid.Row="2"
                         x:Name="NavView"
+                        Background="{ThemeResource AppBackgroundBrush}"
                         PaneDisplayMode="Left"
                         SelectionChanged="NavView_SelectionChanged"
                         IsSettingsVisible="False">
@@ -130,8 +145,11 @@
                 <StackPanel Grid.Row="0" Padding="20" Spacing="8">
                     <TextBlock x:Name="MachineText"
                                FontSize="16"
+                               Foreground="{ThemeResource AppPrimaryTextBrush}"
                                FontWeight="SemiBold"/>
-                    <TextBlock x:Name="ViewerStatusText" Opacity="0.8"/>
+                    <TextBlock x:Name="ViewerStatusText"
+                               Foreground="{ThemeResource AppSecondaryTextBrush}"
+                               Opacity="0.95"/>
                 </StackPanel>
 
                 <Frame x:Name="ContentFrame" Grid.Row="1"/>
