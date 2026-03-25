@@ -2,7 +2,6 @@
 using Windows.UI;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -212,10 +211,13 @@ namespace AureusControl.Views
 
         private Grid BuildCsvHeaderRow()
         {
+            var surfaceBrush = GetThemeBrush("AppSurfaceBrush", Color.FromArgb(255, 34, 57, 69));
+            var primaryBrush = GetThemeBrush("AppPrimaryTextBrush", Color.FromArgb(255, 242, 187, 119));
+
             var grid = new Grid
             {
                 Margin = new Thickness(0, 0, 0, 2),
-                Background = new SolidColorBrush(Color.FromArgb(255, 230, 230, 230))
+                Background = surfaceBrush
             };
 
             for (int i = 0; i < _visibleColumns.Count; i++)
@@ -233,6 +235,7 @@ namespace AureusControl.Views
                 {
                     Text = columnName,
                     Margin = new Thickness(4, 2, 4, 2),
+                    Foreground = primaryBrush,
                     FontWeight = FontWeights.SemiBold,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                     VerticalAlignment = VerticalAlignment.Center
@@ -262,6 +265,7 @@ namespace AureusControl.Views
 
         private Grid BuildCsvDataRow(IReadOnlyList<string> values)
         {
+            var primaryBrush = GetThemeBrush("AppPrimaryTextBrush", Color.FromArgb(255, 242, 187, 119));
             var grid = new Grid { Margin = new Thickness(0, 0, 0, 2) };
 
             for (int i = 0; i < values.Count; i++)
@@ -273,6 +277,7 @@ namespace AureusControl.Views
                 {
                     Text = values[i] ?? "",
                     Margin = new Thickness(8, 4, 12, 4),
+                    Foreground = primaryBrush,
                     TextTrimming = TextTrimming.CharacterEllipsis,
                     FontWeight = FontWeights.Normal
                 };
@@ -373,6 +378,14 @@ namespace AureusControl.Views
             };
 
             flyout.ShowAt(target);
+        }
+
+        private static SolidColorBrush GetThemeBrush(string key, Color fallback)
+        {
+            if (Application.Current.Resources.TryGetValue(key, out var value) && value is SolidColorBrush brush)
+                return brush;
+
+            return new SolidColorBrush(fallback);
         }
 
         private static string FormatRow(Dictionary<string, string> row)

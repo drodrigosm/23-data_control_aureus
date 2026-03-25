@@ -48,7 +48,7 @@ namespace AureusControl
             DarkAppearanceItem.IsChecked = isDark;
 
             var backgroundColor = isDark ? ColorFromHex("#183140") : ColorFromHex("#F8F8F8");
-            var surfaceColor = isDark ? ColorFromHex("#5A6872") : ColorFromHex("#FFFFFF");
+            var surfaceColor = isDark ? ColorFromHex("#21465C") : ColorFromHex("#FFFFFF");
             var primaryTextColor = isDark ? ColorFromHex("#F2BB77") : ColorFromHex("#1F2933");
             var secondaryTextColor = isDark ? ColorFromHex("#D9D9D9") : ColorFromHex("#5A6872");
             var accentColor = isDark ? ColorFromHex("#00B5E2") : ColorFromHex("#00B5E2");
