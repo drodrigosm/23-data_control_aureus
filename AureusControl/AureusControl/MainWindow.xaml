@@ -92,6 +92,7 @@
         <NavigationView Grid.Row="2"
                         x:Name="NavView"
                         Background="{ThemeResource AppBackgroundBrush}"
+                        Foreground="{ThemeResource AppPrimaryTextBrush}"
                         PaneDisplayMode="Left"
                         SelectionChanged="NavView_SelectionChanged"
                         IsSettingsVisible="False">

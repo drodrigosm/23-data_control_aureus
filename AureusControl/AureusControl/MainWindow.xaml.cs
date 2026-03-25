@@ -19,6 +19,7 @@ namespace AureusControl
         private BotExecutionFiles _loadedFiles = new();
 
         private bool _suppressSelectorEvents;
+        private bool _isApplyingAppearance;
 
         public MainWindow()
         {
@@ -33,31 +34,50 @@ namespace AureusControl
 
         private void LightAppearance_Click(object sender, RoutedEventArgs e)
         {
+            if (_isApplyingAppearance)
+                return;
+
             ApplyAppearanceMode(isDark: false);
         }
 
         private void DarkAppearance_Click(object sender, RoutedEventArgs e)
         {
+            if (_isApplyingAppearance)
+                return;
+
             ApplyAppearanceMode(isDark: true);
         }
 
         private void ApplyAppearanceMode(bool isDark)
         {
-            RootGrid.RequestedTheme = isDark ? ElementTheme.Dark : ElementTheme.Light;
-            LightAppearanceItem.IsChecked = !isDark;
-            DarkAppearanceItem.IsChecked = isDark;
+            if (_isApplyingAppearance)
+                return;
 
-            var backgroundColor = isDark ? ColorFromHex("#183140") : ColorFromHex("#F8F8F8");
-            var surfaceColor = isDark ? ColorFromHex("#21465C") : ColorFromHex("#FFFFFF");
-            var primaryTextColor = isDark ? ColorFromHex("#F2BB77") : ColorFromHex("#1F2933");
-            var secondaryTextColor = isDark ? ColorFromHex("#D9D9D9") : ColorFromHex("#5A6872");
-            var accentColor = isDark ? ColorFromHex("#00B5E2") : ColorFromHex("#00B5E2");
+            _isApplyingAppearance = true;
+            try
+            {
+                // Evita que WinUI cambie plantillas automáticamente y provoque estados intermedios.
+                RootGrid.RequestedTheme = ElementTheme.Light;
 
-            Application.Current.Resources["AppBackgroundBrush"] = new SolidColorBrush(backgroundColor);
-            Application.Current.Resources["AppSurfaceBrush"] = new SolidColorBrush(surfaceColor);
-            Application.Current.Resources["AppPrimaryTextBrush"] = new SolidColorBrush(primaryTextColor);
-            Application.Current.Resources["AppSecondaryTextBrush"] = new SolidColorBrush(secondaryTextColor);
-            Application.Current.Resources["AppAccentBrush"] = new SolidColorBrush(accentColor);
+                LightAppearanceItem.IsChecked = !isDark;
+                DarkAppearanceItem.IsChecked = isDark;
+
+                var backgroundColor = isDark ? ColorFromHex("#183140") : ColorFromHex("#F8F8F8");
+                var surfaceColor = isDark ? ColorFromHex("#21465C") : ColorFromHex("#FFFFFF");
+                var primaryTextColor = isDark ? ColorFromHex("#F2BB77") : ColorFromHex("#1F2933");
+                var secondaryTextColor = isDark ? ColorFromHex("#D9D9D9") : ColorFromHex("#5A6872");
+                var accentColor = ColorFromHex("#00B5E2");
+
+                Application.Current.Resources["AppBackgroundBrush"] = new SolidColorBrush(backgroundColor);
+                Application.Current.Resources["AppSurfaceBrush"] = new SolidColorBrush(surfaceColor);
+                Application.Current.Resources["AppPrimaryTextBrush"] = new SolidColorBrush(primaryTextColor);
+                Application.Current.Resources["AppSecondaryTextBrush"] = new SolidColorBrush(secondaryTextColor);
+                Application.Current.Resources["AppAccentBrush"] = new SolidColorBrush(accentColor);
+            }
+            finally
+            {
+                _isApplyingAppearance = false;
+            }
         }
 
         private static Windows.UI.Color ColorFromHex(string hex)
